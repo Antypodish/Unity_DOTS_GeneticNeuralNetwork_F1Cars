@@ -11,7 +11,10 @@ However, it has been completely reworked for DOTS. Some common features may be r
 Well, I love AI stuff, that should be plenty of the reason :)
 But what I wanted to achieve, is to stray away a bit from Unity ML utilities, which is only working on dev machines and requires python, to do training. 
 I want to be able to train AI at runtime as well, maybe even by players during game play.
-Depending on the desired project. So hence here is my motivation.
+Depending on the desired project. 
+I have been playing with different NNs, but all have been written, using classical OOP paradigm. 
+But I really wanted have NN in DOTS for long time already.
+So hence here is my motivation.
 
 
 ## What to expect
