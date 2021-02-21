@@ -78,6 +78,13 @@ This NN uses 3 layers, input, hidden and output.
 When a new generation is initialized, it first crossovers with the previous generation. Then mutation is applied, based on settings of an example manager.
 
 
+## What definatelly still missing
+
+Cars should be marked, or indicated, that they have finished training. For example, when they hit a wall, they should change color. I.e. to semi transparent.
+Manger input for saving / loading file path with brains. For now is hard coded.
+Support for multiple independet managers. (Not tested, partially implemented).
+
+
 ## Things to know
 
 First generation is always random, regardless if it is read from file, or not.
