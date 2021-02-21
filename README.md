@@ -3,7 +3,7 @@
 This project is inspired by Genetic Neural Network https://github.com/iambackit/COPS_AI. 
 However, it has been completely reworked for DOTS. Some common features may be recognised.
 
-![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_17-34-10-png.800219/)
 
 
 ## Motivation
@@ -61,7 +61,7 @@ The duration of training is based on the preset time and alive brains.
 If time runs out (30 sec (starting time is lower)), or no alive population is present, generation will be finalised and a new generation will start.
 If a car hits a barrier, it becomes inhibited, until the next generation. Score is evaluated and then is spawned again at spawn point.
 
-![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-34-21-png.799937/)
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_17-35-46-png.800222/)
 
 
 ## Genetic Neural Network
@@ -80,9 +80,9 @@ When a new generation is initialized, it first crossovers with the previous gene
 
 ## What definatelly is still missing
 
-Cars should be marked, or indicated, that they have finished training. For example, when they hit a wall, they should change color. I.e. to semi transparent.
-Manger input for saving / loading file path with brains. For now is hard coded.
-Support for multiple independet managers. (Not tested, partially implemented).
+* ~~Cars should be marked, or indicated, that they have finished training. For example, when they hit a wall, they should change color. I.e. to semi transparent.~~
+* Manger input for saving / loading file path with brains. For now is hard coded.
+* Support for multiple independet managers. (Not tested, partially implemented).
 
 
 ## Things to know
