@@ -100,3 +100,4 @@ Unity 2020.1.3 or later.
 * Sometimes at initial runtime, cars seem to ignore Unity physics collisions. Don't know the reason at this point. Usually a few generations later, all gets fine.
 * Viewing scene and game at the same time, while training is running, may slow down the simulation.
 * Spawning too many cars at the same spawner, may introduce lag and significant slowdown, due to Unity Physics collision system. Best way to prevent it, is to add more spawn points in different places, or spawn more maps with points. Number of cars will be distributed across all points. Keep in mind, to keep the size of the population, as a multiplier of the number of spawners. Otherwise error may throw out. Desired number of cars per spawns, is around 300 or below.
+* Example Manager System for handling new generations is far from being optimal. It may drop FPS for few framse. But otherwise, I obsererve quite decent performance as of this rather rough work.
