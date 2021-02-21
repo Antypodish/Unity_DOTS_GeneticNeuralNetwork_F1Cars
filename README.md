@@ -35,6 +35,9 @@ Values can be further tweeked. Cars behaviour is rather rough, with main goal, t
 
 ## Game Object Manager with conversion to entity
 
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-34-21-png.799937/)
+
+
 GO Manager contains range of settings, allowing to define, how training will be proceeded.
 It allows to define, how various new generaions will be, based on parents.
 Manager is converted to entity at runtime and can be viewed via Entity Debugger.
