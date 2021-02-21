@@ -4,7 +4,7 @@ This project is inspired by Genetic Neural Network https://github.com/iambackit/
 However, it has been completely reworked for DOTS. Some common feature may be recognised.
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)
 
-## What to expect.
+## What to expect
 
 After opening the project scene, multiple maps will be visible.
 Additional maps can be added, or removed.
