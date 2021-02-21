@@ -2,7 +2,7 @@
 
 This project is inspired by Genetic Neural Network https://github.com/iambackit/COPS_AI. 
 However, it has been completely reworked for DOTS. Some common feature may be recognised.
-[![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)]
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)
 
 ## What to expect.
 
@@ -32,11 +32,10 @@ Results are passed into NN.
 Steering and throthle, is determined by car controller system. 
 Values can be further tweeked. Cars behaviour is rather rough, with main goal, to prove of the concept.
 
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-48-28-png.799946/)
+
 
 ## Game Object Manager with conversion to entity
-
-![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-34-21-png.799937/)
-
 
 GO Manager contains range of settings, allowing to define, how training will be proceeded.
 It allows to define, how various new generaions will be, based on parents.
@@ -48,6 +47,8 @@ Hence, if target population is 320, total visible population will be 620, but ac
 The duration of training is based on the preset time and alive brains. 
 If time runs out (30 sec (starting time is lower)), or no alive population is present, generation will be finalised and new generation will start.
 If car hits a barrier, it become inhibitted, until next generation. Score is evaluated and then is spawned again at spawn point.
+
+![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-34-21-png.799937/)
 
 
 ## Genetic Neural Network
