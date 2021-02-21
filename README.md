@@ -2,6 +2,7 @@
 
 This project is inspired by Genetic Neural Network https://github.com/iambackit/COPS_AI. 
 However, it has been completely reworked for DOTS. Some common features may be recognised.
+
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)
 
 
