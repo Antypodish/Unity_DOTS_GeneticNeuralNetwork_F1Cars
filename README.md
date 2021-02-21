@@ -1,74 +1,83 @@
 # Unity DOTS Genetic Neural Network
 
 This project is inspired by Genetic Neural Network https://github.com/iambackit/COPS_AI. 
-However, it has been completely reworked for DOTS. Some common feature may be recognised.
+However, it has been completely reworked for DOTS. Some common features may be recognised.
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-31-0-png.799931/)
+
+
+## Motivation
+
+Well, I love AI stuff, that should be plenty of the reason :)
+But what I wanted to achieve, is to stray away a bit from Unity ML utilities, which is only working on dev machines and requires python, to do training. 
+I want to be able to train AI at runtime as well, maybe even by players during game play.
+Depending on the desired project. So hence here is my motivation.
+
 
 ## What to expect
 
 After opening the project scene, multiple maps will be visible.
 Additional maps can be added, or removed.
-Each map is a based on a prefab. It contains barriers, checkpoints, and car spawner point.
+Each map is based on a prefab. It contains barriers, checkpoints, and car spawner points.
 
-* Barriers basically limits, where car can go.
-* Checkpoints allow each car to gain score, which contributes for learning.
-* Car spawner points spawn cars at its position, with some additional random position and rotation. Rotation of checkpoint, will spawn cars facing local X axis. More points can be added, or removed as needed per each map.
+* Barriers basically limit where cars can go.
+* Checkpoints allow each car to gain a score, which contributes to learning.
+* Car spawner points spawn cars at its position, with some additional random position and rotation. Rotation of the checkpoint, will spawn cars facing the local X axis. More points can be added, or removed as needed per each map.
 
 Maps can have different barriers configuration and have variation position and orientations of checkpoints.
 
 
 ## Training 
 
-Project comes with partially pretrained set of brains, based on 320 cars. 
-The training took arround 45 min.
-After running further training, car should arrive to the end of map, within few generations.
+Project comes with a partially pretrained set of brains, based on 320 cars. 
+The training took around 45 min.
+After running further training, the car should arrive at the end of the map, within a few generations.
 Data sets can be marked in a manager Game Object, to be saved and loaded.
 
 
 ## Cars
 
-Each car has LIDAR, which casts rays in front of car, 180 degrees.
+Each car has LIDAR, which casts rays in front of the car, 180 degrees.
 Results are passed into NN.
-Steering and throthle, is determined by car controller system. 
-Values can be further tweeked. Cars behaviour is rather rough, with main goal, to prove of the concept.
+Steering and throttle, is determined by the car controller system. 
+Values can be further tweaked. Cars behaviour is rather rough, with the main goal, to prove the concept.
 
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-48-28-png.799946/)
 
 
 ## Game Object Manager with conversion to entity
 
-GO Manager contains range of settings, allowing to define, how training will be proceeded.
-It allows to define, how various new generaions will be, based on parents.
+GO Manager contains a range of settings, allowing to define, how training will be proceeded.
+It allows to define, how various new generations will be, based on parents.
 Manager is converted to entity at runtime and can be viewed via Entity Debugger.
 Changing settings, may require at current state, stop and run game again.
-Manager is just example and can be further modified.
+Manager is just an example and can be further modified.
 It is responsible for managing two sets of populations, current and previous (parents).
-Hence, if target population is 320, total visible population will be 620, but active and trained will be 320.
+Hence, if the target population is 320, the total visible population will be 620, but active and trained will be 320.
 The duration of training is based on the preset time and alive brains. 
-If time runs out (30 sec (starting time is lower)), or no alive population is present, generation will be finalised and new generation will start.
-If car hits a barrier, it become inhibitted, until next generation. Score is evaluated and then is spawned again at spawn point.
+If time runs out (30 sec (starting time is lower)), or no alive population is present, generation will be finalised and a new generation will start.
+If a car hits a barrier, it becomes inhibited, until the next generation. Score is evaluated and then is spawned again at spawn point.
 
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_3-34-21-png.799937/)
 
 
 ## Genetic Neural Network
 
-Each generation spawns set of entities, in this case cars.
-Each entity holds own brain, with own net settings. See Entity Debugger for details.
+Each generation spawns a set of entities, in this case cars.
+Each entity holds its own brain, with its own net settings. See Entity Debugger for details.
 This NN uses 3 layers, input, hidden and output.
 
 * Input layer is taking 9 LIDAR raycasts as input, speed and skidding factors. Total 11 neurons.
-* Hidden layer has same amount of neurons as input. But can be changed in a example manager.
-* Output layer returns throtle and steering values, ranging 0.0 to 1.0. 
+* Hidden layer has the same amount of neurons as input. But can be changed in an example manager.
+* Output layer returns throttle and steering values, ranging 0.0 to 1.0. 
 * Weights count are multiplication of previous and next layer.
 
-When new generation is initialized, it first crossover with previous generation. Then mutation is applied, based on settings of a example manager.
+When a new generation is initialized, it first crossovers with the previous generation. Then mutation is applied, based on settings of an example manager.
 
 
 ## Things to know
 
-First generation is always random, regardles if is read from file, or not.
-Second generation is first one, which contributes into training.
+First generation is always random, regardless if it is read from file, or not.
+The Second generation is the first one, which contributes into training.
 
 
 ## Requirements
@@ -77,6 +86,6 @@ Unity 2020.1.3 or later.
 
 ## Known issues
 
-* Sometimes at initial runtime, cars seems to ignore Unity physics collisions. Don't know the reason at this point. Usually few generations later, all gets fine.
-* Viewing scene and game at the same time, while training is running, may slowdown the simulation.
-* Spawning too many cars at the same spawner, may intoroduce lag and significant slowdown, due to Unity Physics collision system. Best way to prevent it, is to add more spawn points in different places, or spawn more maps with points. Number of cars will be distributed accross all points. Keep in mind, to keep size of population, as multipler of number of spawners. Otherwise error may throw out. Desired number of cars per spawns, is around 300 or below.
+* Sometimes at initial runtime, cars seem to ignore Unity physics collisions. Don't know the reason at this point. Usually a few generations later, all gets fine.
+* Viewing scene and game at the same time, while training is running, may slow down the simulation.
+* Spawning too many cars at the same spawner, may introduce lag and significant slowdown, due to Unity Physics collision system. Best way to prevent it, is to add more spawn points in different places, or spawn more maps with points. Number of cars will be distributed across all points. Keep in mind, to keep the size of the population, as a multiplier of the number of spawners. Otherwise error may throw out. Desired number of cars per spawns, is around 300 or below.
