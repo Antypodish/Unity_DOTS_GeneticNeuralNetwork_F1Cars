@@ -5,6 +5,8 @@ However, it has been completely reworked for DOTS. Some common features may be r
 
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_17-34-10-png.800219/)
 
+![Watch the video](https://www.youtube.com/watch?v=vFFk4b2Xm0o)
+
 
 ## Motivation
 
