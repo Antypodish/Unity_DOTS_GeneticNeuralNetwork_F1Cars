@@ -46,6 +46,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
     {
         public int i ;
         public float f ;
+        public Entity triggeredByEntity ;
     }
 
 

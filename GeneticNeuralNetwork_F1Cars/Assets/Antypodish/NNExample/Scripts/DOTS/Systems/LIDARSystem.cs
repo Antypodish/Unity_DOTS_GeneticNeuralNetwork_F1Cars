@@ -13,7 +13,7 @@ using Antypodish.DOTS ;
 using Antypodish.GeneticNueralNetwork.DOTS ;
 
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {
 
     // [UpdateInGroup ( typeof ( FixedStepSimulationSystemGroup ))]
@@ -31,8 +31,8 @@ namespace Antypodish.AI.DOTS
 
         protected override void OnCreate ( )
         {
-            buildPhysicsWorld = World.GetOrCreateSystem <BuildPhysicsWorld> () ;
-            endFramePhysicsSystem   = World.GetExistingSystem <EndFramePhysicsSystem> () ;
+            buildPhysicsWorld     = World.GetOrCreateSystem <BuildPhysicsWorld> () ;
+            endFramePhysicsSystem = World.GetExistingSystem <EndFramePhysicsSystem> () ;
 
             base.OnCreate ( ); 
         }
@@ -61,7 +61,7 @@ namespace Antypodish.AI.DOTS
         {
 
             CollisionWorld collisionWorld = buildPhysicsWorld.PhysicsWorld.CollisionWorld ;
-            Dependency                    = JobHandle.CombineDependencies ( Dependency, endFramePhysicsSystem.GetOutputDependency ()) ;
+            // Dependency                    = JobHandle.CombineDependencies ( Dependency, endFramePhysicsSystem.GetOutputDependency ()) ;
             
             var na_rays                   = this.na_rays ;
             int i_raysCount               = this.i_raysCount ;

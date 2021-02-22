@@ -2,7 +2,7 @@
 using Unity.Mathematics ;
 using Unity.Rendering ;
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {
 
     public struct VehicleControllsComponent : IComponentData 

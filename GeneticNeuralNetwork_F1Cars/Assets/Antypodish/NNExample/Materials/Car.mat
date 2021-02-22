@@ -53,6 +53,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 96de9c0d54dafee498a2f618f82434eb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Texture2D_bw:
+        m_Texture: {fileID: 2800000, guid: 5541a263b9d63f14ca942acca8fa0aef, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Alpha: 0.29
     - _AlphaClip: 1

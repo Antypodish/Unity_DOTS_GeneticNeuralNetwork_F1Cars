@@ -1,6 +1,6 @@
 ﻿using Unity.Entities;
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {
 
     [GenerateAuthoringComponent]

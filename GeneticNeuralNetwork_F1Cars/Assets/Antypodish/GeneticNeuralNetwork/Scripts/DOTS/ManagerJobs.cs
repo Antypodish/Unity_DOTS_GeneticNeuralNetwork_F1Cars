@@ -15,6 +15,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
     public class ManagerJobs
     {
             
+        /*
         [BurstCompile]
         struct KillBadAncestorsJob : IJobParallelFor
         {
@@ -35,7 +36,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
             }
 
         }
-
+        */
 
         [BurstCompile]
         public struct SetFirstGenerationJob : IJobParallelFor
@@ -310,6 +311,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
             public void Execute ( int i )
             {
+
                 Entity populationEntity = na_populationEntities [i] ;
                 
                 a_assignedToManager [populationEntity] = new NNAssignedToManagerComponent () { entity = nnManagerEntity } ;

@@ -28,8 +28,9 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                 .ForEach ( ( ref DynamicBuffer <NNInputNeuronsValuesBuffer> a_inputLayerValues, ref DynamicBuffer <NNHiddenNeuronsValuesBuffer> a_hiddenLayerValues, ref DynamicBuffer <NNOutputNeuronsValuesBuffer> a_outputLayerValues, ref DynamicBuffer <NNInput2HiddenLayersWeightsBuffer> a_input2hiddenLayerWeights, ref DynamicBuffer <NNHidden2OutputLayersWeightsBuffer> a_hidden2OutputLayerWeights, ref NNBrainScoreComponent brainScore, in NNAssignedToManagerComponent assignedToManager ) =>
             {
 
-                brainScore.f                                            = 0 ;
-                brainScore.i                                            = 0 ;
+                brainScore.f                 = 0 ;
+                brainScore.i                 = 0 ;
+                brainScore.triggeredByEntity = default ;
                 
                 NNLayersNeuronsCountComponent managerLayersNeuronsCount = a_managerLayersNeuronsCount [assignedToManager.entity] ;
 

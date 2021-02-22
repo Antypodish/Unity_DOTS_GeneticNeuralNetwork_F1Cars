@@ -5,7 +5,7 @@ using Antypodish.GeneticNueralNetwork.DOTS ;
 
 using UnityEngine ;
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {    
     
     public struct SpawnerPrefabs_FromEntityData : IComponentData
@@ -52,7 +52,7 @@ namespace Antypodish.AI.DOTS
                                   
 
             em.AddComponent <CarTag> ( spawnerData.prefabCarEntity ) ;
-            em.AddComponent <ShaderAlphaComponent> ( spawnerData.prefabCarEntity ) ;
+            em.AddComponentData ( spawnerData.prefabCarEntity, new ShaderAlphaComponent () { f = 1 } ) ;
             
             em.AddComponent <LIDARTag> ( spawnerData.prefabCarEntity ) ;
 

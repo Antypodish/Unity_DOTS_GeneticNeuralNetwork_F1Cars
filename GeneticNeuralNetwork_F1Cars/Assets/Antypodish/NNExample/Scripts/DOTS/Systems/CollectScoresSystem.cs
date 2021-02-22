@@ -9,7 +9,7 @@ using Unity.Physics.Systems ;
 using Antypodish.DOTS ;
 using Antypodish.GeneticNueralNetwork.DOTS ;
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {
    
     // [UpdateInGroup ( typeof ( FixedStepSimulationSystemGroup ))]
@@ -40,7 +40,7 @@ namespace Antypodish.AI.DOTS
         protected override void OnUpdate ( )
         {
             
-            Dependency = JobHandle.CombineDependencies ( Dependency, endFramePhysicsSystem.GetOutputDependency ()) ;
+            // Dependency = JobHandle.CombineDependencies ( Dependency, endFramePhysicsSystem.GetOutputDependency ()) ;
 
             EntityCommandBuffer ecb = becb.CreateCommandBuffer () ;
             EntityCommandBuffer.ParallelWriter ecbp = ecb.AsParallelWriter () ;
@@ -86,8 +86,13 @@ namespace Antypodish.AI.DOTS
                             // i_brainScore ++ ;
                             // brainScore.i = i_brainScore ;
 
-                            f_brainScore ++ ;
+                            if ( brainScore.triggeredByEntity.Index != otherEntity.Index )
+                            {
+                                f_brainScore ++ ;
+                                brainScore.triggeredByEntity = otherEntity ;
+                            }
 
+// Debug.Log ( "Collect score: " + f_brainScore + " >> " + brainScore.f + " by e: " + entity + "; truggered by e: " + otherEntity ) ;
 
 // Debug.Log ( "Score gained: " + brainScore.i ) ;
                         }

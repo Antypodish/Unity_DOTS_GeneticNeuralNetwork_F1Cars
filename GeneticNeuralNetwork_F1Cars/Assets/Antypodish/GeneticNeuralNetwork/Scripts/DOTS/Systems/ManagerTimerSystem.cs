@@ -1,14 +1,9 @@
 ﻿using UnityEngine ;
 using System.Collections.Generic ;
-// using System.Collections;
 
-using Unity.Jobs ;
-using Unity.Burst ;
 using Unity.Entities ;
-using Unity.Collections ;
 
 using Antypodish.DOTS ;
-// using Antypodish.GeneticNueralNetwork.DOTS ;
 
 
 namespace Antypodish.GeneticNueralNetwork.DOTS
@@ -45,17 +40,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                ComponentType.Exclude <NNMangerIsSpawningNewGenerationTag> ()
             ) ;
             
-            /*
-            group_MMMamagerNotYetActive = EntityManager.CreateEntityQuery
-            (
-               ComponentType.ReadOnly <IsInitializedTag> (),
-               ComponentType.ReadOnly <NNManagerComponent> (),
-
-               
-               ComponentType.Exclude <IsAliveTag> ()
-            ) ;
-            */
-
             group_finishedPopulation = EntityManager.CreateEntityQuery
             (
                ComponentType.ReadOnly <IsAliveTag> (),
@@ -90,7 +74,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
         // Update is called once per frame
         protected override void OnUpdate ( )
         {
-
+            
             if ( Time.ElapsedTime <= i_startTime ) return ; // Delay startup.
 
 
@@ -113,8 +97,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
             
 
             int i_activeManager  = 0 ;
-
-// Debug.LogWarning ( l_managerSharedData.Count ) ;      
+  
 
             l_managerSharedData.Clear () ;
             EntityManager.GetAllUniqueSharedComponentData ( l_managerSharedData ) ;

@@ -44,12 +44,19 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
     /// <summary>
     /// Index to the population.
     /// </summary>
+    [InternalBufferCapacity (0)]
     public struct NNINdexProbabilityBuffer : IBufferElementData
     {
         /// <summary>
         /// Index to the population.
         /// </summary>
         public int i ;
+    }
+    
+    [InternalBufferCapacity (0)]
+    public struct NNPNewPopulationBuffer : IBufferElementData
+    {
+        public Entity entity ;
     }
 
 }

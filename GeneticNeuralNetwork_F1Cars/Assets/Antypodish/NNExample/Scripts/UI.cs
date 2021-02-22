@@ -7,7 +7,7 @@ using Unity.Collections ;
 using Antypodish.DOTS ;
 using Antypodish.GeneticNueralNetwork.DOTS ;
 
-namespace Antypodish.AI
+namespace Antypodish.GNNExample
 {
 
     public class UI : MonoBehaviour

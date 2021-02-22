@@ -9,7 +9,7 @@ using Unity.Mathematics ;
 using Antypodish.DOTS ;
 using Antypodish.GeneticNueralNetwork.DOTS ;
 
-namespace Antypodish.AI.DOTS
+namespace Antypodish.GNNExample.DOTS
 {
     
     public class CarControllerSystem : SystemBase
@@ -34,8 +34,8 @@ namespace Antypodish.AI.DOTS
 
             }).ScheduleParallel () ;
 
-            float f_accelartionFactor = 0.0001f ; // 2
-            float f_steeringFactor    = 1.5f ; // 10
+            float f_accelartionFactor = 0.0001f ;
+            float f_steeringFactor    = 0.8f ;
 
             Entities
                 .WithName ( "CarControllerJob" )

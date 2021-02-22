@@ -79,7 +79,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
         protected override void OnUpdate ( )
         {
-
+            
             if ( group_MMMamager.CalculateChunkCount () == 0 )
             {
                 Debug.LogWarning ( "There is no active manager." ) ;
