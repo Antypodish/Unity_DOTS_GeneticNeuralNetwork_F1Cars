@@ -4,7 +4,7 @@ This project is inspired by Genetic Neural Network https://github.com/iambackit/
 However, it has been completely reworked for DOTS. Some common features may be recognised.
 
 
-Link to YT vid https://www.youtube.com/watch?v=vFFk4b2Xm0o
+Link to YouTube vid https://www.youtube.com/watch?v=vFFk4b2Xm0o
 
 ![Watch the video](https://forum.unity.com/attachments/upload_2021-2-21_17-34-10-png.800219/)
 
