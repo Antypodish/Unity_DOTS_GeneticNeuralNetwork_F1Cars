@@ -43,9 +43,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                 l_managers.Add ( manager ) ;
 
                 Debug.Log ( "Init manager: " + l_managers.Count + "; with elite brains count: " + manager.l_brains.Count ) ;
-                // } // for
-
-                // l_managers.Capacity = i_mangersCount ;
 
             }
 
@@ -123,7 +120,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
                 BufferFromEntity <NNInput2HiddenLayersWeightsBuffer> input2HiddenLayersWeightsBuffer   = system.GetBufferFromEntity <NNInput2HiddenLayersWeightsBuffer> ( false ) ;
                 BufferFromEntity <NNHidden2OutputLayersWeightsBuffer> hidden2OutputLayersWeightsBuffer = system.GetBufferFromEntity <NNHidden2OutputLayersWeightsBuffer> ( false ) ;
-                // BufferFromEntity <NNHiddenLayersNeuronsBiasBuffer> hiddenLayersNeuronsBiasBuffer       = system.GetBufferFromEntity <NNHiddenLayersNeuronsBiasBuffer> ( false ) ;
 
                 NativeArray <Entity> na_spawningNewGenerationEntities = group_populationForWrittingTo.ToEntityArray ( Allocator.TempJob ) ;
 
@@ -140,28 +136,19 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                                 
                     DynamicBuffer <NNInput2HiddenLayersWeightsBuffer> a_input2HiddenLayersWeights   = input2HiddenLayersWeightsBuffer [brainEntity] ;
                     DynamicBuffer <NNHidden2OutputLayersWeightsBuffer> a_hidden2OutputLayersWeights = hidden2OutputLayersWeightsBuffer [brainEntity] ;
-                    // DynamicBuffer <NNHiddenLayersNeuronsBiasBuffer> a_hiddenLayersNeuronsBias       = hiddenLayersNeuronsBiasBuffer [brainEntity] ;
                                 
                                 
                     for ( int k = 0; k < a_input2HiddenLayersWeights.Length; k ++ )
                     {
                         a_input2HiddenLayersWeights [k] = new NNInput2HiddenLayersWeightsBuffer () { f = brain.l_input2HiddenLayerWeights [k] } ;
-                        // Debug.Log ( "Read weight: " + j + " / " + manger.l_brains.Count + "; hidden 2 Output : " + k + " / " + a_input2HiddenLayersWeights.Length + "; value: " + a_input2HiddenLayersWeights [k] ) ;
+// Debug.Log ( "Read weight: " + j + " / " + manger.l_brains.Count + "; hidden 2 Output : " + k + " / " + a_input2HiddenLayersWeights.Length + "; value: " + a_input2HiddenLayersWeights [k] ) ;
                     } // for
                                 
                     for ( int k = 0; k < a_hidden2OutputLayersWeights.Length; k ++ )
                     {
                         a_hidden2OutputLayersWeights [k] = new NNHidden2OutputLayersWeightsBuffer () { f = brain.l_hidden2OutputLayerWeights [k] } ;
-                        // Debug.Log ( "Read weight: " + j + " / " + manger.l_brains.Count + "; hidden 2 Output : " + k + " / " + a_hidden2OutputLayersWeights.Length + "; value: " + a_hidden2OutputLayersWeights [k] ) ;
+// Debug.Log ( "Read weight: " + j + " / " + manger.l_brains.Count + "; hidden 2 Output : " + k + " / " + a_hidden2OutputLayersWeights.Length + "; value: " + a_hidden2OutputLayersWeights [k] ) ;
                     } // for
-                             
-                    /*
-                    for ( int k = 0; k < a_hiddenLayersNeuronsBias.Length; k ++ )
-                    {
-                        a_hiddenLayersNeuronsBias [k] = new NNHiddenLayersNeuronsBiasBuffer () { f = brain.l_hiddenLayersNeuronsBias [k] } ;
-                        // Debug.Log ( "Read weight: " + j + " / " + manger.l_brains.Count + "; hidden 2 Output : " + k + " / " + a_hiddenLayersNeuronsBias.Length + "; value: " + a_hiddenLayersNeuronsBias [k] ) ;
-                    } // for
-                    */
 
                 } // for
 
@@ -180,7 +167,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                             NewGenerationkIsSpawingSystem._Hidden2OutputLayerWeightsCount ( layersNeuronCounts.i_outputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ),
                             layersNeuronCounts.i_hiddenLayerNeuronsCount
                         ) ;
-                        // JsonNeuralNetworkMangers._InitializeWeights ( ref newBrain, layersNeuronCounts.i_inputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ) ;
+
                         manger.l_brains.Add ( newBrain ) ;
                     }
 
@@ -197,7 +184,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
         /// <summary>
         /// Save elite brains.
         /// </summary>
-        static public void _SaveDNA2File ( SystemBase system, in JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in NNManagerComponent manager, in NativeArray <Entity> na_parentPopulation, int i_activeManager, string s_path )
+        static public void _SaveDNA2File ( SystemBase system, in JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in NNManagerComponent manager, in NativeArray <EntityIndex> na_elities, int i_activeManager, string s_path )
         {
 
 
@@ -209,7 +196,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                 ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore                           = system.GetComponentDataFromEntity <NNBrainScoreComponent> ( true ) ;
                 BufferFromEntity <NNInput2HiddenLayersWeightsBuffer> input2HiddenLayersWeightsBuffer   = system.GetBufferFromEntity <NNInput2HiddenLayersWeightsBuffer> ( true ) ;
                 BufferFromEntity <NNHidden2OutputLayersWeightsBuffer> hidden2OutputLayersWeightsBuffer = system.GetBufferFromEntity <NNHidden2OutputLayersWeightsBuffer> ( true ) ;
-                // BufferFromEntity <NNHiddenLayersNeuronsBiasBuffer> hiddenLayersNeuronsBiasBuffer       = system.GetBufferFromEntity <NNHiddenLayersNeuronsBiasBuffer> ( false ) ;
 
                 JsonNeuralNetworkMangers.Manager jsonNeuralNetworkManger = jsonNeuralNetworkMangers.l_managers [i_activeManager] ;
 
@@ -220,41 +206,32 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
                 Debug.Log ( "elites: " + i_elitsCount + " / " + jsonNeuralNetworkManger.l_brains.Count ) ;
 
                 // Grab best elites to save.
-                for ( int j = 0; j < i_elitsCount; j ++ )
+                for ( int i = 0; i < i_elitsCount; i ++ )
                 {
 
-                    Entity brainEntity = na_parentPopulation [j] ;
+                    Entity brainEntity = na_elities [i].entity ;
                                     
                     NNBrainScoreComponent brainScore                                                = a_brainScore [brainEntity] ;
 
                     DynamicBuffer <NNInput2HiddenLayersWeightsBuffer> a_input2HiddenLayersWeights   = input2HiddenLayersWeightsBuffer [brainEntity] ;
                     DynamicBuffer <NNHidden2OutputLayersWeightsBuffer> a_hidden2OutputLayersWeights = hidden2OutputLayersWeightsBuffer [brainEntity] ;
-                    // DynamicBuffer <NNHiddenLayersNeuronsBiasBuffer> a_hiddenLayersNeuronsBias       = hiddenLayersNeuronsBiasBuffer [brainEntity] ;
-
                                     
 
-                    JsonNeuralNetworkMangers.Manager.Brain brain                                    = jsonNeuralNetworkManger.l_brains [j] ;
+                    JsonNeuralNetworkMangers.Manager.Brain brain                                    = jsonNeuralNetworkManger.l_brains [i] ;
 
                     brain.i_score = brainScore.i ;
 
-                    // Debug.LogError ( j + " / " + i_elitsCount + " / brains: " + jsonNeuralNetworkManger.l_brains.Count + "; weights: " + a_input2HiddenLayersWeights.Length + " / " + brain.l_input2HiddenLayerWeights.Count ) ;
+// Debug.LogError ( i + " / " + i_elitsCount + " / brains: " + jsonNeuralNetworkManger.l_brains.Count + "; weights: " + a_input2HiddenLayersWeights.Length + " / " + brain.l_input2HiddenLayerWeights.Count ) ;
                     
-                    for ( int k = 0; k < a_input2HiddenLayersWeights.Length; k ++ )
+                    for ( int j = 0; j < a_input2HiddenLayersWeights.Length; j ++ )
                     {
-                        brain.l_input2HiddenLayerWeights [k] = a_input2HiddenLayersWeights [k].f ;
+                        brain.l_input2HiddenLayerWeights [j] = a_input2HiddenLayersWeights [j].f ;
                     }
 
-                    for ( int k = 0; k < a_hidden2OutputLayersWeights.Length; k ++ )
+                    for ( int j = 0; j < a_hidden2OutputLayersWeights.Length; j ++ )
                     {
-                        brain.l_hidden2OutputLayerWeights [k] = a_hidden2OutputLayersWeights [k].f ;
+                        brain.l_hidden2OutputLayerWeights [j] = a_hidden2OutputLayersWeights [j].f ;
                     }
-                     
-                    /*
-                    for ( int k = 0; k < a_hiddenLayersNeuronsBias.Length; k ++ )
-                    {
-                        brain.l_hiddenLayersNeuronsBias [k] = a_hiddenLayersNeuronsBias [k].f ;
-                    }
-                    */
 
                 } // for
 

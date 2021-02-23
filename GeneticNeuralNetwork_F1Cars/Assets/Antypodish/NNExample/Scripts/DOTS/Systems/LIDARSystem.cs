@@ -124,6 +124,11 @@ namespace Antypodish.GNNExample.DOTS
 
             }).ScheduleParallel ();
 
+
+            // Added based on forum suggestion
+            // https://forum.unity.com/threads/i-got-issue-with-raycast-performance-for-many-thousands-of-rays.1062185/#post-6867647
+            // buildPhysicsWorld.AddInputDependencyToComplete ( Dependency ) ;
+
         }
     }
 }

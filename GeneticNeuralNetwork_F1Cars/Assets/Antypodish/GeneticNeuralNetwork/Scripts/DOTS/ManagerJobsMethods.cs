@@ -105,6 +105,117 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
         }
 
+
+        static public void _NextGeneration ( ref SystemBase systemBase, ref JobHandle jobHandle, ref BeginInitializationEntityCommandBufferSystem becb, ref EntityCommandBuffer.ParallelWriter ecbp, ref EntityCommandBuffer ecb, ref Unity.Mathematics.Random random, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, ref NativeArray <int> na_totalScore, ref NativeArray <Entity> na_parentPopulationEntities, ref NativeArray <Entity> na_currentPopulationEntities, ref BufferFromEntity <NNINdexProbabilityBuffer> indexProbabilityBuffer, ref NNManagerComponent manager, ref NNManagerBestFitnessComponent managerBestFitness, ref NNScoreComponent managerScore, in ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore, Entity managerEntity, int i_activeManager, string s_path )
+        {
+            
+            NativeMultiHashMap <int, EntityIndex> nmhm_parentEntitiesScore  = new NativeMultiHashMap <int, EntityIndex> ( na_currentPopulationEntities.Length, Allocator.TempJob ) ;
+            NativeMultiHashMap <int, EntityIndex> nmhm_currentEntitiesScore = new NativeMultiHashMap <int, EntityIndex> ( na_parentPopulationEntities.Length, Allocator.TempJob ) ;
+
+
+            _CalcuateTotalScore ( ref jobHandle, ref na_totalScore, ref nmhm_parentEntitiesScore, ref nmhm_currentEntitiesScore, in na_parentPopulationEntities, in na_currentPopulationEntities, in a_brainScore ) ; // , in manager ) ;
+
+                    
+            int i_currentPopulationTotalScore = na_totalScore [0] ;
+            // managerScore.i                 = i_currentPopulationTotalScore ;
+            int i_totalElitesScoreTemp        = (int) ( i_currentPopulationTotalScore * manager.f_eliteSize ) ;
+            int i_currentPopulationTemp       = (int) ( na_currentPopulationEntities.Length * manager.f_eliteSize ) ;
+            int i_totalElitesScore            = i_currentPopulationTotalScore <= i_currentPopulationTemp ? i_currentPopulationTotalScore : i_totalElitesScoreTemp ;
+                        
+Debug.Log ( "Current total score of pop: " + i_currentPopulationTotalScore + "; elite score: " + i_totalElitesScore ) ;
+                        
+
+            NativeArray <int> na_parentSortedKeysWithDuplicates = nmhm_parentEntitiesScore.GetKeyArray ( Allocator.TempJob ) ;
+            // This stores key keys in order. But keeps first unique keys at the front of an array.
+            // Total array size matches of total elements.
+            na_parentSortedKeysWithDuplicates.Sort () ;
+            // Sorted.
+            int i_parentUniqueKeyCount        = na_parentSortedKeysWithDuplicates.Unique () ;
+
+// Debug.LogError ( "sorted keys: " + na_parentSortedKeysWithDuplicates.Length ) ;
+
+                        
+
+            NativeArray <int> na_currentSortedKeysWithDuplicates = nmhm_currentEntitiesScore.GetKeyArray ( Allocator.TempJob ) ;
+            // This stores key keys in order. But keeps first unique keys at the front of an array.
+            // Total array size matches of total elements.
+            na_currentSortedKeysWithDuplicates.Sort () ;
+            // Sorted.
+            int i_uniqueKeyCount              = na_currentSortedKeysWithDuplicates.Unique () ;
+
+            int i_eltieCountTemp              = (int) ( na_currentSortedKeysWithDuplicates.Length * manager.f_eliteSize ) ;
+            // Minimum elite size mus be met.
+            int i_eltiesCount                 = i_eltieCountTemp <= i_totalElitesScoreTemp ? na_currentSortedKeysWithDuplicates.Length : i_eltieCountTemp ;
+                    
+
+            NativeArray <EntityIndex> na_elities = new NativeArray <EntityIndex> ( i_eltiesCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
+
+            jobHandle = new CommonJobs.GetElitesEntitiesJob ()
+            {
+                i_eltiesCount                      = i_eltiesCount,
+
+                na_elities                         = na_elities,
+                nmhm_entitiesScore                 = nmhm_currentEntitiesScore,
+                na_currentSortedKeysWithDuplicates = na_currentSortedKeysWithDuplicates
+
+            }.Schedule ( jobHandle ) ;
+
+//                    Dependency.Complete () ;
+                        
+
+            DynamicBuffer <NNINdexProbabilityBuffer> a_currentEliteIndexProbability = indexProbabilityBuffer [managerEntity] ;
+
+            a_currentEliteIndexProbability.ResizeUninitialized ( i_totalElitesScore ) ;
+
+
+Debug.Log ( "current pop total score: " + i_currentPopulationTotalScore + "; total elite score: " + i_totalElitesScore + "; elites count: " + i_eltiesCount + " of current population: " + na_currentPopulationEntities.Length ) ;
+
+
+            _EvaluateElites ( ref jobHandle, ref a_currentEliteIndexProbability, ref ecbp, ref ecb, ref random, ref na_elities, ref na_currentPopulationEntities, ref na_parentPopulationEntities, in nmhm_parentEntitiesScore, in na_parentSortedKeysWithDuplicates, in a_brainScore ) ;
+
+            // becb.AddJobHandleForProducer ( Dependency ) ;
+
+            // Dependency.Complete () ;
+
+
+            jobHandle = new ManagerJobs.CalculateTotalScoresOfPopulationJob ()
+            {
+                na_populationEntities = na_parentPopulationEntities,
+                na_totalScore         = na_totalScore,
+
+                a_brainScore          = a_brainScore
+
+            }.Schedule ( jobHandle ) ;
+                        
+                        
+            becb.AddJobHandleForProducer ( jobHandle ) ;
+            jobHandle.Complete () ;
+
+
+            
+            int i_totalScore          = na_totalScore [0] ;
+            managerScore.i            = i_totalScore ;
+            managerScore.i_elite      = i_totalElitesScore ; 
+                    
+            int i_bestEntityIndex     = na_parentSortedKeysWithDuplicates [i_parentUniqueKeyCount-1] ;
+            nmhm_parentEntitiesScore.TryGetFirstValue ( i_bestEntityIndex, out EntityIndex bestEntityIndex, out NativeMultiHashMapIterator <int> it ) ;
+            
+            na_parentPopulationEntities.Dispose () ;
+            nmhm_parentEntitiesScore.Dispose () ;
+            nmhm_currentEntitiesScore.Dispose () ;
+            na_parentSortedKeysWithDuplicates.Dispose () ;
+            na_currentSortedKeysWithDuplicates.Dispose () ; 
+
+            managerBestFitness.i      = a_brainScore [bestEntityIndex.entity].i ;
+            managerBestFitness.entity = bestEntityIndex.entity ;
+
+            // Save elite brains.
+            ManagerMethods._SaveDNA2File ( systemBase, in jsonNeuralNetworkMangers, in manager, in na_elities, i_activeManager, s_path ) ;
+
+            na_elities.Dispose () ;
+
+        }
+
         
         public static void _CalcuateTotalScore ( ref JobHandle jobHandle, ref NativeArray <int> na_totalScore, ref NativeMultiHashMap <int, EntityIndex> nmhm_parentEntitiesScore, ref NativeMultiHashMap <int, EntityIndex> nmhm_currentEntitiesScore, in NativeArray <Entity> na_parentPopulationEntities, in  NativeArray <Entity> na_currentPopulationEntities, in ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore ) // , in NNManagerComponent manager )
         {

@@ -266,7 +266,7 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
         
         [BurstCompile]
-        public struct ReuseEntitiesJob : IJobParallelFor
+        public struct ReuseBrainsJob : IJobParallelFor
         {
             
             [NativeDisableParallelForRestriction]

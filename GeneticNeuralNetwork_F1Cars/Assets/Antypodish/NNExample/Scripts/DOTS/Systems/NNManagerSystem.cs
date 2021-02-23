@@ -218,6 +218,15 @@ namespace Antypodish.GNNExample.DOTS
             _ExecuteActiveManager ( this, Dependency, ref em, ref becb, ref eecb, ref random, ref l_managerSharedData, ref jsonNeuralNetworkMangers, in s_path, in spawner, in group_MMMamager, in group_carSpawnerPoint, in group_finishedPopulation, in group_allPopulation, in group_firstPopulation, in group_previousGeneration, in group_currentPopulation, in group_need2InitializePopulation, layersNeuronCounts ) ;
 
         }
+        
+
+        static private void _DefineLayersNuronsCount ( ref LayersNeuronCounts layersNeuronCounts )
+        {
+            layersNeuronCounts.i_inputLayerNeuronsCount  = 11 ; // Lidar inputs - ( lenght - 2 ). // length - 2 = forward speed // lenght - 1 = side wawy speed, skid.
+            layersNeuronCounts.i_outputLayerNeuronsCount = 2 ; // Throtle, steering
+            layersNeuronCounts.i_hiddenLayerNeuronsCount = (int) ( math.max ( layersNeuronCounts.i_inputLayerNeuronsCount, layersNeuronCounts.i_outputLayerNeuronsCount ) * 1f ) ;
+            
+        }
 
 
         static private void _ExecuteActiveManager ( SystemBase systemBase, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref EndInitializationEntityCommandBufferSystem eecb, ref Unity.Mathematics.Random random, ref List <NNManagerSharedComponent> l_managerSharedData, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in string s_path, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_MMMamager, in EntityQuery group_carSpawnerPoint, in EntityQuery group_finishedPopulation, in EntityQuery group_allPopulation, in EntityQuery group_firstPopulation, in EntityQuery group_previousGeneration, in EntityQuery group_currentPopulation, in EntityQuery group_need2InitializePopulation, LayersNeuronCounts layersNeuronCounts )
@@ -366,227 +375,7 @@ Debug.Log ( "-------- Else next gen: " + group_firstPopulation.CalculateEntityCo
 
                     // NN manager has already parents population.
 
-
-// Debug.Log ( "finished population: " + group_finishedPopulation.CalculateEntityCount () + " / " + manager.i_populationSize ) ;
-
-                    // Increase life time duration, if applicable.
-                    if ( group_finishedPopulation.CalculateEntityCount () < manager.i_populationSize ) 
-                    {   
-                        manager.i_startLifeTime  += manager.i_incrementLifeTime ;
-                        manager.i_startLifeTime   = math.min ( manager.i_startLifeTime, manager.i_maxLifeTime ) ;
-                        a_manager [managerEntity] = manager ; // Set back ;
-                    }
-
-
-                    BufferFromEntity <NNINdexProbabilityBuffer> indexProbabilityBuffer = systemBase.GetBufferFromEntity <NNINdexProbabilityBuffer> ( false ) ;
-                    ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore       = systemBase.GetComponentDataFromEntity <NNBrainScoreComponent> ( true ) ;
-
-
-                    NativeArray <Entity> na_parentPopulationEntities                   = group_previousGeneration.ToEntityArray ( Allocator.TempJob ) ;
-                    NativeArray <Entity> na_currentPopulationEntities                  = group_currentPopulation.ToEntityArray ( Allocator.TempJob ) ; 
-                    
-                    // NativeHashMap <int, bool> nhm_checkedEliteEntities              = new NativeHashMap <int, bool> ( i_perentageOfElites, Allocator.TempJob ) ;
-                  
-                    NativeMultiHashMap <int, EntityIndex> nmhm_parentEntitiesScore    = new NativeMultiHashMap <int, EntityIndex> ( na_currentPopulationEntities.Length, Allocator.TempJob ) ;
-                    NativeMultiHashMap <int, EntityIndex> nmhm_currentEntitiesScore   = new NativeMultiHashMap <int, EntityIndex> ( na_parentPopulationEntities.Length, Allocator.TempJob ) ;
-
-                    /*
-                    Dependency = new DisableCarJob ()
-                    {
-                        ecbp                  = ecbp0,
-                        na_populationEntities = group_finishedPopulation.ToEntityArray ( Allocator.TempJob ),
-                        a_shaderAlpha         = a_shaderAlpha
-
-                    }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, Dependency ) ;
-                    */
-Debug.Log ( "Manager scores" ) ;
-
-                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._CalcuateTotalScore ( ref jobHandle, ref na_totalScore, ref nmhm_parentEntitiesScore, ref nmhm_currentEntitiesScore, in na_parentPopulationEntities, in na_currentPopulationEntities, in a_brainScore ) ; // , in manager ) ;
-
-
-                    
-                    int i_currentPopulationTotalScore = na_totalScore [0] ;
-                    // managerScore.i                 = i_currentPopulationTotalScore ;
-                    int i_totalElitesScoreTemp        = (int) ( i_currentPopulationTotalScore * manager.f_eliteSize ) ;
-                    int i_currentPopulationTemp       = (int) ( na_currentPopulationEntities.Length * manager.f_eliteSize ) ;
-                    int i_totalElitesScore            = i_currentPopulationTotalScore <= i_currentPopulationTemp ? i_currentPopulationTotalScore : i_totalElitesScoreTemp ;
-                        
-Debug.Log ( "Current total score of pop: " + i_currentPopulationTotalScore + "; elite score: " + i_totalElitesScore ) ;
-                        
-                    NativeArray <int> na_parentSortedKeysWithDuplicates = nmhm_parentEntitiesScore.GetKeyArray ( Allocator.TempJob ) ;
-                    // This stores key keys in order. But keeps first unique keys at the front of an array.
-                    // Total array size matches of total elements.
-                    na_parentSortedKeysWithDuplicates.Sort () ;
-                    // Sorted.
-                    int i_parentUniqueKeyCount        = na_parentSortedKeysWithDuplicates.Unique () ;
-
-// Debug.LogError ( "sorted keys: " + na_parentSortedKeysWithDuplicates.Length ) ;
-
-                        
-                    NativeArray <int> na_currentSortedKeysWithDuplicates = nmhm_currentEntitiesScore.GetKeyArray ( Allocator.TempJob ) ;
-                    // This stores key keys in order. But keeps first unique keys at the front of an array.
-                    // Total array size matches of total elements.
-                    na_currentSortedKeysWithDuplicates.Sort () ;
-                    // Sorted.
-                    int i_uniqueKeyCount              = na_currentSortedKeysWithDuplicates.Unique () ;
-
-                    int i_eltieCountTemp              = (int) ( na_currentSortedKeysWithDuplicates.Length * manager.f_eliteSize ) ;
-                    // Minimum elite size mus be met.
-                    int i_eltiesCount                 = i_eltieCountTemp <= i_totalElitesScoreTemp ? na_currentSortedKeysWithDuplicates.Length : i_eltieCountTemp ;
-                    
-
-/*
-Debug.LogWarning ( "parent" ) ; // temp: " + i_eltieCountTemp + "; elit count: " + i_eltiesCount ) ;
-var valarr = nmhm_parentEntitiesScore.GetValueArray ( Allocator.Temp ) ;
-
-for ( int j = 0; j < valarr.Length; j ++ )
-{
-Debug.Log ( i + " / " + valarr.Length + "; e: " + valarr [j].entity + "; " + valarr [j].i_index + "; score: " + a_brainScore [valarr [j].entity].f ) ;
-} // for
-
-Debug.LogWarning ( "elit temp: " + i_eltieCountTemp + "; elit count: " + i_eltiesCount ) ;
-valarr = nmhm_currentEntitiesScore.GetValueArray ( Allocator.Temp ) ;
-
-for ( int j = 0; j < valarr.Length; j ++ )
-{
-Debug.Log ( i + " / " + valarr.Length + "; e: " + valarr [j].entity + "; " + valarr [j].i_index + "; score: " + a_brainScore [valarr [j].entity].f ) ;
-} // for
-                        
-*/
-
-                    NativeArray <EntityIndex> na_elities                = new NativeArray <EntityIndex> ( i_eltiesCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
-
-                    jobHandle = new CommonJobs.GetElitesEntitiesJob ()
-                    {
-                        i_eltiesCount                      = i_eltiesCount,
-
-                        na_elities                         = na_elities,
-                        nmhm_entitiesScore                 = nmhm_currentEntitiesScore,
-                        na_currentSortedKeysWithDuplicates = na_currentSortedKeysWithDuplicates
-
-                    }.Schedule ( jobHandle ) ;
-
-//                    Dependency.Complete () ;
-                        
-
-                    DynamicBuffer <NNINdexProbabilityBuffer> a_currentEliteIndexProbability = indexProbabilityBuffer [managerEntity] ;
-
-                    a_currentEliteIndexProbability.ResizeUninitialized ( i_totalElitesScore ) ;
-
-
-
-Debug.Log ( "current pop total score: " + i_currentPopulationTotalScore + "; total elite score: " + i_totalElitesScore + "; elites count: " + i_eltiesCount + " of current population: " + na_currentPopulationEntities.Length ) ;
-                        
-
-                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._EvaluateElites ( ref jobHandle, ref a_currentEliteIndexProbability, ref ecbp0, ref ecb0, ref random, ref na_elities, ref na_currentPopulationEntities, ref na_parentPopulationEntities, in nmhm_parentEntitiesScore, in na_parentSortedKeysWithDuplicates, in a_brainScore ) ;
-
-                    // becb.AddJobHandleForProducer ( Dependency ) ;
-
-                    // Dependency.Complete () ;
-
-         
-                    /*
-// Test.                        
-{
-                            
-// group_previousGeneration.SetSharedComponentFilter ( mangerSharedComponent ) ;
-
-// var a = na_parentPopulation ;
-    
-
-for ( int j = 0; j < na_parentPopulation.Length; j ++ )
-{
-    Debug.Log ( j + " / " + na_parentPopulation.Length + "; parent entity " + na_parentPopulation [j] ) ;
-}
-    
-for ( int j = 0; j < na_currentPopulationEntities.Length; j ++ )
-{
-    Debug.Log ( j + " / " + na_currentPopulationEntities.Length + "; current entity " + na_currentPopulationEntities [j] ) ;
-}
-
-}
-*/
-
-                    jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.CalculateTotalScoresOfPopulationJob ()
-                    {
-                        na_populationEntities = na_parentPopulationEntities,
-                        na_totalScore         = na_totalScore,
-
-                        a_brainScore          = a_brainScore
-
-                    }.Schedule ( jobHandle ) ;
-                        
-                        
-                    becb.AddJobHandleForProducer ( jobHandle ) ;
-                    jobHandle.Complete () ;
-
-                    // Utilize exisiting entities. Prevent physics from regenerating colliders.
-
-// Debug.Log ( "Score again: " + managerScore.i + " >> " + na_totalScore [0] + " of parents count: " + na_parentPopulation.Length ) ;
-                    int i_totalScore          = na_totalScore [0] ;
-                    managerScore.i            = i_totalScore ;
-                    managerScore.i_elite      = i_totalElitesScore ; 
-                    
-                    int i_bestEntityIndex     = na_parentSortedKeysWithDuplicates [i_parentUniqueKeyCount-1] ;
-                    nmhm_parentEntitiesScore.TryGetFirstValue ( i_bestEntityIndex, out EntityIndex entityIndex, out NativeMultiHashMapIterator <int> it ) ;
-
-                    managerBestFitness.i      = a_brainScore [entityIndex.entity].i ;
-                    managerBestFitness.entity = entityIndex.entity ;
-
-                    // Save elite brains.
-                    ManagerMethods._SaveDNA2File ( systemBase, in jsonNeuralNetworkMangers, in manager, in na_parentPopulationEntities, i_activeManager, s_path ) ;
-
-                    na_parentPopulationEntities.Dispose () ;
-
-
-// Debug.Log ( "copy: " + na_currentPopulationEntities.Length ) ;                        
-                    
-                    
-                    // DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = newPopulationBuffer [managerEntity] ;
-
-                    na_spawningNewGenerationEntities = new NativeArray <Entity> ( na_currentPopulationEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
-                    // Utilize exisiting entities. Prevent physics from regenerating colliders.
-                    // a_newPopulation.CopyFrom ( na_currentPopulationEntities.Reinterpret <> ) ;
-                    na_spawningNewGenerationEntities.CopyFrom ( na_currentPopulationEntities ) ;
-                    
-                    na_currentPopulationEntities.Dispose () ;
-                        
-// for ( int j = 0; j < na_spawningNewGenerationEntities.Length; j ++ )
-// {
-// Debug.Log ( j + " / " + na_spawningNewGenerationEntities.Length + "; parent entity " + na_spawningNewGenerationEntities [j] ) ;
-
-// if ( !EntityManager.Exists ( na_spawningNewGenerationEntities [j] ) ) Debug.LogError ( "Not extists!" ) ;
-// } // for
-
-
-                    jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.ReuseEntitiesJob ()
-                    {
-                        ecbp                  = ecbp0,
-                        na_populationEntities = na_spawningNewGenerationEntities
-                            
-                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
-                        
-
-                    jobHandle = new ReuseEntitiesJob ()
-                    {
-                        na_populationEntities = na_spawningNewGenerationEntities,
-                        a_shaderAlpha         = a_shaderAlpha
-                            
-                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
-                        
-
-                    // becb.AddJobHandleForProducer ( Dependency ) ;
-                    // Dependency.Complete () ;
-                       
-                    na_elities.Dispose () ;
-                    na_parentSortedKeysWithDuplicates.Dispose () ;
-                    na_currentSortedKeysWithDuplicates.Dispose () ; 
-                        
-                    // nhm_checkedEliteEntities.Dispose () ;
-                    // na_currentPopulationEntities.Dispose () ;
-                    nmhm_parentEntitiesScore.Dispose () ;
-                    nmhm_currentEntitiesScore.Dispose () ;
-
+                    _NextGeneration ( systemBase, jobHandle, ref becb, ref ecbp0, ref ecb0, ref random, ref a_shaderAlpha, ref jsonNeuralNetworkMangers, ref na_totalScore, ref a_manager, ref manager, ref managerScore, ref managerBestFitness, in group_previousGeneration, in group_finishedPopulation, in group_currentPopulation, i_activeManager, managerEntity, s_path, out na_spawningNewGenerationEntities ) ;
 
                 }
                 else
@@ -685,6 +474,54 @@ Debug.LogWarning ( "Default" ) ;
 
         }
 
+
+        static private void _NextGeneration ( SystemBase systemBase, JobHandle jobHandle, ref BeginInitializationEntityCommandBufferSystem becb, ref EntityCommandBuffer.ParallelWriter ecbp, ref EntityCommandBuffer ecb, ref Unity.Mathematics.Random random, ref ComponentDataFromEntity <ShaderAlphaComponent> a_shaderAlpha, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, ref NativeArray <int> na_totalScore, ref ComponentDataFromEntity <NNManagerComponent> a_manager, ref NNManagerComponent manager, ref NNScoreComponent managerScore, ref NNManagerBestFitnessComponent managerBestFitness, in EntityQuery group_previousGeneration, in EntityQuery group_finishedPopulation, in EntityQuery group_currentPopulation, int i_activeManager, Entity managerEntity, string s_path, out NativeArray <Entity> na_spawningNewGenerationEntities )
+        {
+
+            // Increase life time duration, if applicable.
+            if ( group_finishedPopulation.CalculateEntityCount () < manager.i_populationSize ) 
+            {   
+                manager.i_startLifeTime  += manager.i_incrementLifeTime ;
+                manager.i_startLifeTime   = math.min ( manager.i_startLifeTime, manager.i_maxLifeTime ) ;
+                a_manager [managerEntity] = manager ; // Set back ;
+            }
+
+
+            BufferFromEntity <NNINdexProbabilityBuffer> indexProbabilityBuffer = systemBase.GetBufferFromEntity <NNINdexProbabilityBuffer> ( false ) ;
+            ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore       = systemBase.GetComponentDataFromEntity <NNBrainScoreComponent> ( true ) ;
+
+
+            NativeArray <Entity> na_parentPopulationEntities                   = group_previousGeneration.ToEntityArray ( Allocator.TempJob ) ;
+            NativeArray <Entity> na_currentPopulationEntities                  = group_currentPopulation.ToEntityArray ( Allocator.TempJob ) ; 
+                    
+            // NativeHashMap <int, bool> nhm_checkedEliteEntities              = new NativeHashMap <int, bool> ( i_perentageOfElites, Allocator.TempJob ) ;
+                  
+
+            GeneticNueralNetwork.DOTS.ManagerJobsMethods._NextGeneration ( ref systemBase, ref jobHandle, ref becb, ref ecbp, ref ecb, ref random, ref jsonNeuralNetworkMangers, ref na_totalScore, ref na_parentPopulationEntities, ref na_currentPopulationEntities, ref indexProbabilityBuffer, ref manager, ref managerBestFitness, ref managerScore, in a_brainScore, managerEntity, i_activeManager, s_path ) ;
+
+
+            na_spawningNewGenerationEntities = new NativeArray <Entity> ( na_currentPopulationEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
+            // Utilize exisiting entities. Prevent physics from regenerating colliders.
+            // a_newPopulation.CopyFrom ( na_currentPopulationEntities.Reinterpret <> ) ;
+            na_spawningNewGenerationEntities.CopyFrom ( na_currentPopulationEntities ) ;
+                    
+            na_currentPopulationEntities.Dispose () ;
+
+            _ReuseBrains ( ref jobHandle, ref ecbp, ref a_shaderAlpha, in na_spawningNewGenerationEntities ) ;
+     
+            becb.AddJobHandleForProducer ( jobHandle ) ;
+            jobHandle.Complete () ;
+
+            // na_elities.Dispose () ;
+            // na_parentSortedKeysWithDuplicates.Dispose () ;
+            // na_currentSortedKeysWithDuplicates.Dispose () ; 
+
+            // nhm_checkedEliteEntities.Dispose () ;
+            // na_currentPopulationEntities.Dispose () ;
+            // nmhm_parentEntitiesScore.Dispose () ;
+            // nmhm_currentEntitiesScore.Dispose () ;
+
+        }
 
         static private void _CheckNoneActiveMangers ( NNManagerSystem managerSystem, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_MMMamagerNotYetActive, LayersNeuronCounts layersNeuronCounts )
         {
@@ -808,12 +645,26 @@ Debug.LogWarning ( "Default" ) ;
         }
 
 
-        static private void _DefineLayersNuronsCount ( ref LayersNeuronCounts layersNeuronCounts )
+        static private void _ReuseBrains ( ref JobHandle jobHandle, ref EntityCommandBuffer.ParallelWriter ecbp, ref ComponentDataFromEntity <ShaderAlphaComponent> a_shaderAlpha, in NativeArray <Entity> na_spawningNewGenerationEntities )
         {
-            layersNeuronCounts.i_inputLayerNeuronsCount  = 11 ; // Lidar inputs - ( lenght - 2 ). // length - 2 = forward speed // lenght - 1 = side wawy speed, skid.
-            layersNeuronCounts.i_outputLayerNeuronsCount = 2 ; // Throtle, steering
-            layersNeuronCounts.i_hiddenLayerNeuronsCount = (int) ( math.max ( layersNeuronCounts.i_inputLayerNeuronsCount, layersNeuronCounts.i_outputLayerNeuronsCount ) * 1f ) ;
+
             
+            jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.ReuseBrainsJob ()
+            {
+                ecbp                  = ecbp,
+                na_populationEntities = na_spawningNewGenerationEntities
+                            
+            }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
+                        
+
+            jobHandle = new ReuseBrainsJob ()
+            {
+                na_populationEntities = na_spawningNewGenerationEntities,
+                a_shaderAlpha         = a_shaderAlpha
+                            
+            }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
+                 
+
         }
 
     
@@ -930,7 +781,7 @@ Debug.LogWarning ( "Default" ) ;
         }
         
         [BurstCompile]
-        public struct ReuseEntitiesJob : IJobParallelFor
+        public struct ReuseBrainsJob : IJobParallelFor
         {
             
             [ReadOnly]
