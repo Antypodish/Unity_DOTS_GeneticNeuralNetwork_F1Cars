@@ -3631,7 +3631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fc3f1529a77c7042ae8cc6cc94925f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  i_populationSize: 30
+  i_populationSize: 300
   f_eliteSize: 0.2
   i_startLifeTime: 10
   i_maxLifeTime: 30
@@ -3653,7 +3653,7 @@ MonoBehaviour:
   f_minorMutationRangeScale3: 0.01
   f_majorMutationChance3: 0
   f_readFromFile: 1
-  f_write2File: 0
+  f_write2File: 1
 --- !u!114 &2083529976
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3842,6 +3842,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 13317868482432485, guid: dbfab6d7511f7584eb7ccd36f5610acb,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3160967385748605781, guid: dbfab6d7511f7584eb7ccd36f5610acb,
         type: 3}
       propertyPath: m_Name
@@ -3900,6 +3905,11 @@ PrefabInstance:
     - target: {fileID: 3160967385748605782, guid: dbfab6d7511f7584eb7ccd36f5610acb,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7461771546000182782, guid: dbfab6d7511f7584eb7ccd36f5610acb,
+        type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

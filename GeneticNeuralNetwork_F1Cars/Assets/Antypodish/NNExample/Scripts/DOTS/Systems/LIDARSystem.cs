@@ -18,7 +18,7 @@ namespace Antypodish.GNNExample.DOTS
 
     // [UpdateInGroup ( typeof ( FixedStepSimulationSystemGroup ))]
     [UpdateAfter ( typeof ( FixedStepSimulationSystemGroup ))]
-    [UpdateAfter ( typeof ( EndFramePhysicsSystem ))]
+    // [UpdateAfter ( typeof ( EndFramePhysicsSystem ))] // Is ignored.
     public class LIDARSystem : SystemBase
     {
 

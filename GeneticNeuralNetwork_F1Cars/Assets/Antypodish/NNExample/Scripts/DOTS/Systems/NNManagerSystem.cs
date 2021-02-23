@@ -1,5 +1,4 @@
 ﻿using UnityEngine ;
-using System.IO ;
 using System.Collections.Generic ;
 // using System.Collections;
 
@@ -21,7 +20,6 @@ namespace Antypodish.GNNExample.DOTS
     [AlwaysUpdateSystem]
     [UpdateInGroup ( typeof ( GeneticNueralNetwork.DOTS.ManagerPreSimulationSystemGroup ) )]  
     [UpdateBefore ( typeof ( GeneticNueralNetwork.DOTS.ManagerTimerSystem ))]
-    // [UpdateBefore ( typeof ( DNACrossOvereSystem ))]
     public class NNManagerSystem : SystemBase
     {
         
@@ -40,7 +38,6 @@ namespace Antypodish.GNNExample.DOTS
         EntityQuery group_firstPopulation ;
         EntityQuery group_need2InitializePopulation ;
         EntityQuery group_currentPopulation ;
-        // EntityQuery group_currentPopulationNotYetMarkedAsFinished ;
         EntityQuery group_previousGeneration ;
         EntityQuery group_finishedPopulation ;
 
@@ -70,7 +67,7 @@ namespace Antypodish.GNNExample.DOTS
 
         protected override void OnCreate ( )
         {
-            Debug.LogWarning ( "On Genetic Neural Network manager start." ) ;
+            Debug.LogWarning ( "Genetic Neural Network example manager started." ) ;
 
             becb = World.GetOrCreateSystem <BeginInitializationEntityCommandBufferSystem> () ;
             eecb = World.GetOrCreateSystem <EndInitializationEntityCommandBufferSystem> () ;
@@ -192,16 +189,6 @@ namespace Antypodish.GNNExample.DOTS
         // Update is called once per frame
         protected override void OnUpdate ( )
         {
-                    
-            // EntityCommandBuffer ecb0                 = becb.CreateCommandBuffer () ;
-            // EntityCommandBuffer.ParallelWriter ecbp0 = ecb0.AsParallelWriter () ;
-            
-            // EntityCommandBuffer ecb1                 = eecb.CreateCommandBuffer () ;
-            // EntityCommandBuffer.ParallelWriter ecbp1 = ecb1.AsParallelWriter () ;
-            
-
-            ComponentDataFromEntity <NNManagerComponent> a_manager ;
-            
             
             if ( group_prefabs.CalculateChunkCount () == 0 ) return ; // Early exit.
 
@@ -249,18 +236,12 @@ namespace Antypodish.GNNExample.DOTS
 
 
             random.NextUInt2 () ;
-            // Unity.Mathematics.Random random = this.random ;
-
-            // InvalidOperationException: 
-            // The previously scheduled job ExportPhysicsWorld:ExportDynamicBodiesJob writes to the ComponentDataFromEntity<Unity.Transforms.Translation> ExportDynamicBodiesJob.JobData.PositionType. 
-            // You must call JobHandle.Complete() on the job ExportPhysicsWorld:ExportDynamicBodiesJob, before you can read from the ComponentDataFromEntity<Unity.Transforms.Translation> safely.
-            // Dependency.Complete () ;
-
+ 
 // Debug.LogWarning ( "Test shared manger data count 1: " + l_managerSharedData.Count ) ;
             
             ComponentDataFromEntity <NNManagerComponent> a_manager                       = systemBase.GetComponentDataFromEntity <NNManagerComponent> ( false ) ;
             // NNManagerComponent manager ;
-            // ComponentDataFromEntity <NNTimerComponent> a_managerTimer                    = GetComponentDataFromEntity <NNTimerComponent> ( false ) ;
+            // ComponentDataFromEntity <NNTimerComponent> a_managerTimer                 = GetComponentDataFromEntity <NNTimerComponent> ( false ) ;
             ComponentDataFromEntity <NNManagerBestFitnessComponent> a_managerBestFitness = systemBase.GetComponentDataFromEntity <NNManagerBestFitnessComponent> ( false ) ;
             ComponentDataFromEntity <NNScoreComponent> a_managerScore                    = systemBase.GetComponentDataFromEntity <NNScoreComponent> ( false ) ;
             ComponentDataFromEntity <IsTimeUpTag> a_isTimeUpTag                          = systemBase.GetComponentDataFromEntity <IsTimeUpTag> ( true ) ;
@@ -269,7 +250,7 @@ namespace Antypodish.GNNExample.DOTS
             
 
             // Get cars spawner.    
-            NativeArray <Spawner> na_spawnerPoints                                       = new NativeArray <Spawner> ( 1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
+            // NativeArray <Spawner> na_spawnerPoints                                       = new NativeArray <Spawner> ( 1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
 
             ComponentDataFromEntity <Translation> a_position                             = systemBase.GetComponentDataFromEntity <Translation> ( false ) ;
             ComponentDataFromEntity <Rotation> a_rotation                                = systemBase.GetComponentDataFromEntity <Rotation> ( false ) ;
@@ -289,18 +270,18 @@ namespace Antypodish.GNNExample.DOTS
 
             l_managerSharedData.Clear () ;
             em.GetAllUniqueSharedComponentData ( l_managerSharedData ) ;        
-            NativeArray <Entity> na_spawnerPointEntities = group_carSpawnerPoint.ToEntityArray ( Allocator.TempJob ) ;
+            NativeArray <Entity> na_spawnerPointEntities          = group_carSpawnerPoint.ToEntityArray ( Allocator.TempJob ) ;
 
-            na_spawnerPoints.Dispose () ;
-            na_spawnerPoints                             = new NativeArray <Spawner> ( na_spawnerPointEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
+            // na_spawnerPoints.Dispose () ;
+            NativeArray <Spawner> na_spawnerPoints                = new NativeArray <Spawner> ( na_spawnerPointEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
 
 
-            // Ignore default manager entity ( index = 0, version = 0 ), taken from prefab entity.
-            for ( int i = 0; i < l_managerSharedData.Count; i++ )
+            // Ignore default manager entity ( index              = 0, version = 0 ), taken from prefab entity.
+            for ( int i                                           = 0; i < l_managerSharedData.Count; i++ )
             {
                 
-                NNManagerSharedComponent mangerSharedComponent = l_managerSharedData [i] ;
-                Entity managerEntity                           = new Entity () { Index = mangerSharedComponent.i_entityIndex, Version = mangerSharedComponent.i_entityVersion } ;
+                NNManagerSharedComponent mangerSharedComponent    = l_managerSharedData [i] ;
+                Entity managerEntity                              = new Entity () { Index = mangerSharedComponent.i_entityIndex, Version = mangerSharedComponent.i_entityVersion } ;
                 
 // Debug.Log ( "nnManagerEntity: " + managerEntity + "; " + a_isTimeUpTag.HasComponent ( managerEntity ) + "; " +  ManagerMethods._SkipInvalidManager ( managerEntity, ref a_isAliveTag ) ) ;
 
@@ -512,15 +493,6 @@ Debug.LogWarning ( "Default" ) ;
             becb.AddJobHandleForProducer ( jobHandle ) ;
             jobHandle.Complete () ;
 
-            // na_elities.Dispose () ;
-            // na_parentSortedKeysWithDuplicates.Dispose () ;
-            // na_currentSortedKeysWithDuplicates.Dispose () ; 
-
-            // nhm_checkedEliteEntities.Dispose () ;
-            // na_currentPopulationEntities.Dispose () ;
-            // nmhm_parentEntitiesScore.Dispose () ;
-            // nmhm_currentEntitiesScore.Dispose () ;
-
         }
 
         static private void _CheckNoneActiveMangers ( NNManagerSystem managerSystem, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_MMMamagerNotYetActive, LayersNeuronCounts layersNeuronCounts )
@@ -538,7 +510,6 @@ Debug.LogWarning ( "Default" ) ;
                 
                 NativeArray <Entity> na_notActiveManagers = group_MMMamagerNotYetActive.ToEntityArray ( Allocator.Temp ) ;
                 
-                // var layersNeuronCounts = layersNeuronCounts ;
 
                 jobHandle = managerSystem.Entities
                     .WithName ( "NNResizeFirstGenerationBuffersJob" )
@@ -611,25 +582,7 @@ Debug.LogWarning ( "Default" ) ;
                     DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = newPopulationBuffer [managerEntity] ;
                     
                     GeneticNueralNetwork.DOTS.ManagerJobsMethods._SetFirstGeneration ( ref systemBase, ref jobHandle, ref ecbp, in a_newPopulation, managerEntity ) ;
-                    /*
-            jobHandle = new ManagerJobs.SetFirstGenerationJob ()
-            {
 
-                ecbp                  = ecbp,
-                na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray ()
-
-            }.Schedule ( a_newPopulation.Length, 256, jobHandle ) ;
-                        
-            jobHandle = new ManagerJobs.AssignManager2BrainJob ()
-            {
-
-                ecbp                   = ecbp,
-                na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray (),
-                a_assignedToManager   = systemBase.GetComponentDataFromEntity <NNAssignedToManagerComponent> ( false ),
-                nnManagerEntity       = managerEntity
-
-            }.Schedule  ( a_newPopulation.Length, 256, jobHandle ) ;
-                    */
 
 // Debug.Log ( "new generation: " + na_spawningNewGenerationEntities.Length ) ;
                  

@@ -14,7 +14,7 @@ namespace Antypodish.GNNExample.DOTS
    
     // [UpdateInGroup ( typeof ( FixedStepSimulationSystemGroup ))]
     [UpdateAfter ( typeof ( FixedStepSimulationSystemGroup ))]
-    [UpdateAfter ( typeof ( Unity.Physics.Stateful.TriggerEventConversionSystem ))]
+    // [UpdateAfter ( typeof ( Unity.Physics.Stateful.TriggerEventConversionSystem ))] // Is ignored
     public class CollectScoresSystem : SystemBase
     {
 

@@ -11,7 +11,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
     
     // [AlwaysUpdateSystem]
     [UpdateInGroup ( typeof ( ManagerPreSimulationSystemGroup ) )]  
-    [UpdateBefore ( typeof ( CalculateBestFitnessSystem ) )]
     public class ManagerTimerSystem : SystemBase
     {
         
@@ -27,8 +26,6 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
 
         protected override void OnCreate ( )
         {
-
-            Debug.LogWarning ( "On Genetic Neural Network manager start." ) ;
 
             becb = World.GetOrCreateSystem <BeginSimulationEntityCommandBufferSystem> () ;
 
