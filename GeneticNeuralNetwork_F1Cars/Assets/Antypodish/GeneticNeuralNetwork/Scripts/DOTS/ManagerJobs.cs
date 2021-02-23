@@ -233,9 +233,9 @@ namespace Antypodish.GeneticNueralNetwork.DOTS
         {
 
             [ReadOnly]
-            // [DeallocateOnJobCompletion]
             public NativeArray <Entity> na_populationEntities ;
 
+            [NativeDisableParallelForRestriction]
             public NativeArray <int> na_totalScore ;
 
             [ReadOnly]

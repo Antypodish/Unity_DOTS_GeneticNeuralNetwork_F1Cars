@@ -30,6 +30,8 @@ namespace Antypodish.GNNExample.DOTS
         BeginInitializationEntityCommandBufferSystem becb ;
         EndInitializationEntityCommandBufferSystem eecb ;
 
+        EntityManager em ;
+
         EntityQuery group_MMMamager ;
         EntityQuery group_MMMamagerNotYetActive ;
         EntityQuery group_prefabs ;
@@ -60,7 +62,6 @@ namespace Antypodish.GNNExample.DOTS
         
         private List <NNManagerSharedComponent> l_managerSharedData = new List <NNManagerSharedComponent> ( 1000 ) ;
         
-        NativeArray <int> na_totalScore ;
 
         Unity.Mathematics.Random random ;
 
@@ -73,6 +74,8 @@ namespace Antypodish.GNNExample.DOTS
 
             becb = World.GetOrCreateSystem <BeginInitializationEntityCommandBufferSystem> () ;
             eecb = World.GetOrCreateSystem <EndInitializationEntityCommandBufferSystem> () ;
+
+            em   = World.EntityManager ;
 
             group_MMMamager = EntityManager.CreateEntityQuery
             (
@@ -172,8 +175,6 @@ namespace Antypodish.GNNExample.DOTS
             
             _DefineLayersNuronsCount ( ref layersNeuronCounts ) ;
             
-            na_totalScore                                = new NativeArray <int> ( 1, Allocator.Persistent, NativeArrayOptions.ClearMemory ) ;
-
             random                                       = new Unity.Mathematics.Random ( (uint) System.DateTime.UtcNow.Millisecond + 5000 ) ;
 
             jsonNeuralNetworkMangers                     = new ManagerMethods.JsonNeuralNetworkMangers () ;
@@ -183,19 +184,20 @@ namespace Antypodish.GNNExample.DOTS
 
         protected override void OnDestroy ( )
         {
-            na_totalScore.Dispose () ;
         }
+
+
 
 
         // Update is called once per frame
         protected override void OnUpdate ( )
         {
                     
-            EntityCommandBuffer ecb0                 = becb.CreateCommandBuffer () ;
-            EntityCommandBuffer.ParallelWriter ecbp0 = ecb0.AsParallelWriter () ;
+            // EntityCommandBuffer ecb0                 = becb.CreateCommandBuffer () ;
+            // EntityCommandBuffer.ParallelWriter ecbp0 = ecb0.AsParallelWriter () ;
             
-            EntityCommandBuffer ecb1                 = eecb.CreateCommandBuffer () ;
-            EntityCommandBuffer.ParallelWriter ecbp1 = ecb1.AsParallelWriter () ;
+            // EntityCommandBuffer ecb1                 = eecb.CreateCommandBuffer () ;
+            // EntityCommandBuffer.ParallelWriter ecbp1 = ecb1.AsParallelWriter () ;
             
 
             ComponentDataFromEntity <NNManagerComponent> a_manager ;
@@ -210,119 +212,16 @@ namespace Antypodish.GNNExample.DOTS
             SpawnerPrefabs_FromEntityData spawner                                        = EntityManager.GetComponentData <SpawnerPrefabs_FromEntityData> ( prefabsEntity ) ;
 
 
-            
+            // Check none active managers.
+            _CheckNoneActiveMangers ( this, Dependency, ref em, ref becb, ref jsonNeuralNetworkMangers, in spawner, in group_MMMamagerNotYetActive, layersNeuronCounts ) ;
 
-            // Check managers.
-            if ( group_MMMamagerNotYetActive.CalculateChunkCount () > 0 )
-            {
-                
-                NativeArray <Entity> na_notActiveManagers = group_MMMamagerNotYetActive.ToEntityArray ( Allocator.Temp ) ;
-                
-                var layersNeuronCounts = this.layersNeuronCounts ;
+            _ExecuteActiveManager ( this, Dependency, ref em, ref becb, ref eecb, ref random, ref l_managerSharedData, ref jsonNeuralNetworkMangers, in s_path, in spawner, in group_MMMamager, in group_carSpawnerPoint, in group_finishedPopulation, in group_allPopulation, in group_firstPopulation, in group_previousGeneration, in group_currentPopulation, in group_need2InitializePopulation, layersNeuronCounts ) ;
 
-                Entities
-                    .WithName ( "NNResizeFirstGenerationBuffersJob" )
-                    .WithAll <NNManagerComponent, IsInitializedTag> ()
-                    .WithNone <IsAliveTag> ()
-                    // .WithReadOnly ( layersNeuronCounts )
-                    .ForEach ( ( ref NNLayersNeuronsCountComponent layersNeuronsCount ) =>
-                {
-                
-                    layersNeuronsCount.i_inputLayerNeuronsCount  = layersNeuronCounts.i_inputLayerNeuronsCount ;
-                    layersNeuronsCount.i_outputLayerNeuronsCount = layersNeuronCounts.i_outputLayerNeuronsCount ;
-                    layersNeuronsCount.i_hiddenLayerNeuronsCount = layersNeuronCounts.i_hiddenLayerNeuronsCount ; 
-
-                }).ScheduleParallel () ;
-                
+        }
 
 
-                // becb.AddJobHandleForProducer ( Dependency ) ;
-
-                // InvalidOperationException: 
-                // The previously scheduled job NNManagerSystem:<>c__DisplayClass_NNResizeFirstGenerationBuffersJob reads from the Unity.Entities.EntityTypeHandle <>c__DisplayClass_NNResizeFirstGenerationBuffersJob.safety. You must call JobHandle.Complete() on the job NNManagerSystem:<>c__DisplayClass_NNResizeFirstGenerationBuffersJob, before you can deallocate the Unity.Entities.EntityTypeHandle safely.
-                Dependency.Complete () ;
-
-                
-                for ( int i = 0; i < na_notActiveManagers.Length; i ++ )
-                {
-                    
-                    Entity managerEntity                                   = na_notActiveManagers [i] ;
-                    a_manager                                              = GetComponentDataFromEntity <NNManagerComponent> ( true ) ;
-                    NNManagerComponent manager                             = a_manager [managerEntity] ;
-
-                    NativeArray <Entity> na_spawningNewGenerationEntities  = EntityManager.Instantiate ( spawner.prefabCarEntity, manager.i_populationSize, Allocator.TempJob ) ;
-                    
-
-                    DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = EntityManager.GetBuffer <NNPNewPopulationBuffer> ( managerEntity ) ;
-                    a_newPopulation.ResizeUninitialized ( manager.i_populationSize ) ;
-
-                    a_newPopulation.CopyFrom ( na_spawningNewGenerationEntities.Reinterpret <NNPNewPopulationBuffer> () ) ;
-
-                    na_spawningNewGenerationEntities.Dispose () ;
-
-                } // for
-                
-                
-                BufferFromEntity <NNPNewPopulationBuffer> newPopulationBuffer = GetBufferFromEntity <NNPNewPopulationBuffer> ( false ) ;
-// UnityEngine.Debug.LogWarning ( "First gen 1: " + na_notActiveManagers.Length ) ;
-
-                
-                for ( int i = 0; i < na_notActiveManagers.Length; i ++ )
-                {
-
-Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount () ) ;
-
-                        
-                    Entity managerEntity       = na_notActiveManagers [i] ;
-                    a_manager                  = GetComponentDataFromEntity <NNManagerComponent> ( true ) ;
-                    NNManagerComponent manager = a_manager [managerEntity] ;
-                    
-                    
-                    jsonNeuralNetworkMangers._AddAndInitializeManger ( 
-                        ManagerMethods._ElitesCount ( in manager ), 
-                        NewGenerationkIsSpawingSystem._Input2HiddenLayerWeightsCount ( layersNeuronCounts.i_inputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ), 
-                        NewGenerationkIsSpawingSystem._Hidden2OutputLayerWeightsCount ( layersNeuronCounts.i_outputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ), 
-                        layersNeuronCounts.i_hiddenLayerNeuronsCount,
-                        ref jsonNeuralNetworkMangers.l_managers 
-                    ) ;
-
-                    ecb0.AddComponent <IsAliveTag> ( managerEntity ) ;
-
-                    DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = newPopulationBuffer [managerEntity] ;
-
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.SetFirstGenerationJob ()
-                    {
-
-                        ecbp                  = ecbp0,
-                        na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray ()
-
-                    }.Schedule ( a_newPopulation.Length, 256, Dependency ) ;
-                        
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.AssignManager2BrainJob ()
-                    {
-
-                        ecbp                   = ecbp0,
-                        na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray (),
-                        a_assignedToManager   = GetComponentDataFromEntity <NNAssignedToManagerComponent> ( false ),
-                        nnManagerEntity       = managerEntity
-
-                    }.Schedule  ( a_newPopulation.Length, 256, Dependency ) ;
-                        
-
-// Debug.Log ( "new generation: " + na_spawningNewGenerationEntities.Length ) ;
-                 
-                } // for
-
-                becb.AddJobHandleForProducer ( Dependency ) ;
-                Dependency.Complete () ;
-
-                na_notActiveManagers.Dispose () ;
-
-            } 
-
-           
-
-
+        static private void _ExecuteActiveManager ( SystemBase systemBase, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref EndInitializationEntityCommandBufferSystem eecb, ref Unity.Mathematics.Random random, ref List <NNManagerSharedComponent> l_managerSharedData, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in string s_path, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_MMMamager, in EntityQuery group_carSpawnerPoint, in EntityQuery group_finishedPopulation, in EntityQuery group_allPopulation, in EntityQuery group_firstPopulation, in EntityQuery group_previousGeneration, in EntityQuery group_currentPopulation, in EntityQuery group_need2InitializePopulation, LayersNeuronCounts layersNeuronCounts )
+        {
 
 // Debug.LogWarning ( "Example managers: " + group_MMMamager.CalculateEntityCount () ) ;      
             if ( group_MMMamager.CalculateChunkCount () == 0 )
@@ -331,9 +230,17 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
                 return ;
             }
       
+            
+            EntityCommandBuffer ecb0                 = becb.CreateCommandBuffer () ;
+            EntityCommandBuffer.ParallelWriter ecbp0 = ecb0.AsParallelWriter () ;
+            
+            EntityCommandBuffer ecb1                 = eecb.CreateCommandBuffer () ;
+            EntityCommandBuffer.ParallelWriter ecbp1 = ecb1.AsParallelWriter () ;
 
-            this.random.NextUInt2 () ;
-            Unity.Mathematics.Random random = this.random ;
+
+
+            random.NextUInt2 () ;
+            // Unity.Mathematics.Random random = this.random ;
 
             // InvalidOperationException: 
             // The previously scheduled job ExportPhysicsWorld:ExportDynamicBodiesJob writes to the ComponentDataFromEntity<Unity.Transforms.Translation> ExportDynamicBodiesJob.JobData.PositionType. 
@@ -342,12 +249,12 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
 
 // Debug.LogWarning ( "Test shared manger data count 1: " + l_managerSharedData.Count ) ;
             
-            a_manager                                                                    = GetComponentDataFromEntity <NNManagerComponent> ( false ) ;
+            ComponentDataFromEntity <NNManagerComponent> a_manager                       = systemBase.GetComponentDataFromEntity <NNManagerComponent> ( false ) ;
             // NNManagerComponent manager ;
             // ComponentDataFromEntity <NNTimerComponent> a_managerTimer                    = GetComponentDataFromEntity <NNTimerComponent> ( false ) ;
-            ComponentDataFromEntity <NNManagerBestFitnessComponent> a_managerBestFitness = GetComponentDataFromEntity <NNManagerBestFitnessComponent> ( false ) ;
-            ComponentDataFromEntity <NNScoreComponent> a_managerScore                    = GetComponentDataFromEntity <NNScoreComponent> ( false ) ;
-            ComponentDataFromEntity <IsTimeUpTag> a_isTimeUpTag                          = GetComponentDataFromEntity <IsTimeUpTag> ( true ) ;
+            ComponentDataFromEntity <NNManagerBestFitnessComponent> a_managerBestFitness = systemBase.GetComponentDataFromEntity <NNManagerBestFitnessComponent> ( false ) ;
+            ComponentDataFromEntity <NNScoreComponent> a_managerScore                    = systemBase.GetComponentDataFromEntity <NNScoreComponent> ( false ) ;
+            ComponentDataFromEntity <IsTimeUpTag> a_isTimeUpTag                          = systemBase.GetComponentDataFromEntity <IsTimeUpTag> ( true ) ;
             
             NativeArray <Entity> na_managers                                             = group_MMMamager.ToEntityArray ( Allocator.Temp ) ;
             
@@ -355,12 +262,15 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
             // Get cars spawner.    
             NativeArray <Spawner> na_spawnerPoints                                       = new NativeArray <Spawner> ( 1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
 
-            ComponentDataFromEntity <Translation> a_position                             = GetComponentDataFromEntity <Translation> ( false ) ;
-            ComponentDataFromEntity <Rotation> a_rotation                                = GetComponentDataFromEntity <Rotation> ( false ) ;
-            ComponentDataFromEntity <IsAliveTag> a_isAliveTag                            = GetComponentDataFromEntity <IsAliveTag> ( true ) ;
+            ComponentDataFromEntity <Translation> a_position                             = systemBase.GetComponentDataFromEntity <Translation> ( false ) ;
+            ComponentDataFromEntity <Rotation> a_rotation                                = systemBase.GetComponentDataFromEntity <Rotation> ( false ) ;
+            ComponentDataFromEntity <IsAliveTag> a_isAliveTag                            = systemBase.GetComponentDataFromEntity <IsAliveTag> ( true ) ;
 
-            ComponentDataFromEntity <ShaderAlphaComponent> a_shaderAlpha                 = GetComponentDataFromEntity <ShaderAlphaComponent> ( false ) ;
+            ComponentDataFromEntity <ShaderAlphaComponent> a_shaderAlpha                 = systemBase.GetComponentDataFromEntity <ShaderAlphaComponent> ( false ) ;
       
+                        
+            NativeArray <int> na_totalScore                                              = new NativeArray <int> ( 1, Allocator.Persistent, NativeArrayOptions.ClearMemory ) ;
+
             // BufferFromEntity <NNPNewPopulationBuffer> newPopulationBuffer                = GetBufferFromEntity <NNPNewPopulationBuffer> ( false ) ;
             
             int i_activeManager  = 0 ;
@@ -369,9 +279,9 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
  // Debug.LogWarning ( "Example managers: " + l_managerSharedData.Count ) ;      
 
             l_managerSharedData.Clear () ;
-            EntityManager.GetAllUniqueSharedComponentData ( l_managerSharedData ) ;
-              
+            em.GetAllUniqueSharedComponentData ( l_managerSharedData ) ;        
             NativeArray <Entity> na_spawnerPointEntities = group_carSpawnerPoint.ToEntityArray ( Allocator.TempJob ) ;
+
             na_spawnerPoints.Dispose () ;
             na_spawnerPoints                             = new NativeArray <Spawner> ( na_spawnerPointEntities.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
 
@@ -416,7 +326,7 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
                     isManagerActive = true ;
 
                     
-                    Dependency = new GetCarsSpawnersJob ()
+                    jobHandle = new GetCarsSpawnersJob ()
                     {
 
                         na_spawnerPointEntities = na_spawnerPointEntities,
@@ -426,7 +336,7 @@ Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount 
                         a_rotation              = a_rotation
 
 
-                    }.Schedule ( na_spawnerPointEntities.Length, 256, Dependency ) ;
+                    }.Schedule ( na_spawnerPointEntities.Length, 256, jobHandle ) ;
             
                 }
 
@@ -445,29 +355,8 @@ Debug.Log ( "-------- Spawning first gen: " + group_need2InitializePopulation.Ca
                         
 Debug.Log ( "-------- First parents of second gen: " + group_firstPopulation.CalculateEntityCount () ) ;
 
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.SetFirstGenerationAsAncestorsJob ()
-                    {
-                        ecbp                   = ecbp0,
-                        na_populationEntities = group_firstPopulation.ToEntityArray ( Allocator.TempJob )
-
-                    }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, Dependency ) ;
-                        
-                    Dependency = new DisableCarJob ()
-                    {
-                        ecbp                  = ecbp0,
-                        na_populationEntities = group_firstPopulation.ToEntityArray ( Allocator.TempJob ),
-                        a_shaderAlpha         = a_shaderAlpha
-
-                    }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, Dependency ) ;
-                        
-                    becb.AddJobHandleForProducer ( Dependency ) ;
-                    Dependency.Complete () ;
-                        
-                    ManagerMethods._ReadDNAFromFile ( this, ref jsonNeuralNetworkMangers, in layersNeuronCounts, in group_firstPopulation, in manager, i_activeManager, s_path ) ;
-
-
-                    na_spawningNewGenerationEntities = EntityManager.Instantiate ( spawner.prefabCarEntity, manager.i_populationSize, Allocator.TempJob ) ;
-
+                    _FirstParent ( systemBase, jobHandle, ref em, ref becb, ref ecbp0, ref a_shaderAlpha, ref jsonNeuralNetworkMangers, in spawner, in group_firstPopulation, in manager, layersNeuronCounts, i_activeManager, s_path, out na_spawningNewGenerationEntities ) ;
+                  
                 }
                 else if ( group_currentPopulation.CalculateChunkCount () > 0 )
                 {
@@ -489,8 +378,8 @@ Debug.Log ( "-------- Else next gen: " + group_firstPopulation.CalculateEntityCo
                     }
 
 
-                    BufferFromEntity <NNINdexProbabilityBuffer> indexProbabilityBuffer = GetBufferFromEntity <NNINdexProbabilityBuffer> ( false ) ;
-                    ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore       = GetComponentDataFromEntity <NNBrainScoreComponent> ( true ) ;
+                    BufferFromEntity <NNINdexProbabilityBuffer> indexProbabilityBuffer = systemBase.GetBufferFromEntity <NNINdexProbabilityBuffer> ( false ) ;
+                    ComponentDataFromEntity <NNBrainScoreComponent> a_brainScore       = systemBase.GetComponentDataFromEntity <NNBrainScoreComponent> ( true ) ;
 
 
                     NativeArray <Entity> na_parentPopulationEntities                   = group_previousGeneration.ToEntityArray ( Allocator.TempJob ) ;
@@ -511,40 +400,11 @@ Debug.Log ( "-------- Else next gen: " + group_firstPopulation.CalculateEntityCo
                     }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, Dependency ) ;
                     */
 Debug.Log ( "Manager scores" ) ;
-                    Dependency = new DNACrossOvereSystem.GetPopulationScoreJob ( )
-                    {
-                        canGetEachScore              = true,
-                        na_populationEntities        = na_parentPopulationEntities, 
-                        a_brainScore                 = a_brainScore, 
 
-                        nmhm_populationEntitiesScore = nmhm_parentEntitiesScore.AsParallelWriter ()
-
-                    }.Schedule ( na_parentPopulationEntities.Length, 256, Dependency ) ;
-                        
-                    Dependency = new DNACrossOvereSystem.GetPopulationScoreJob ( )
-                    {
-                        canGetEachScore              = false,
-                        na_populationEntities        = na_currentPopulationEntities, 
-                        a_brainScore                 = a_brainScore, 
-
-                        nmhm_populationEntitiesScore = nmhm_currentEntitiesScore.AsParallelWriter ()
-
-                    }.Schedule ( na_currentPopulationEntities.Length, 256, Dependency ) ;
-
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.CalculateTotalScoresOfPopulationJob ()
-                    {
-
-                        na_populationEntities = na_currentPopulationEntities,
-                        na_totalScore         = na_totalScore,
-
-                        a_brainScore          = a_brainScore
-
-                    }.Schedule ( Dependency ) ;
+                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._CalcuateTotalScore ( ref jobHandle, ref na_totalScore, ref nmhm_parentEntitiesScore, ref nmhm_currentEntitiesScore, in na_parentPopulationEntities, in na_currentPopulationEntities, in a_brainScore ) ; // , in manager ) ;
 
 
-                    Dependency.Complete () ;
-
-
+                    
                     int i_currentPopulationTotalScore = na_totalScore [0] ;
                     // managerScore.i                 = i_currentPopulationTotalScore ;
                     int i_totalElitesScoreTemp        = (int) ( i_currentPopulationTotalScore * manager.f_eliteSize ) ;
@@ -573,7 +433,7 @@ Debug.Log ( "Current total score of pop: " + i_currentPopulationTotalScore + "; 
                     int i_eltieCountTemp              = (int) ( na_currentSortedKeysWithDuplicates.Length * manager.f_eliteSize ) ;
                     // Minimum elite size mus be met.
                     int i_eltiesCount                 = i_eltieCountTemp <= i_totalElitesScoreTemp ? na_currentSortedKeysWithDuplicates.Length : i_eltieCountTemp ;
-
+                    
 
 /*
 Debug.LogWarning ( "parent" ) ; // temp: " + i_eltieCountTemp + "; elit count: " + i_eltiesCount ) ;
@@ -596,7 +456,7 @@ Debug.Log ( i + " / " + valarr.Length + "; e: " + valarr [j].entity + "; " + val
 
                     NativeArray <EntityIndex> na_elities                = new NativeArray <EntityIndex> ( i_eltiesCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory ) ;
 
-                    Dependency = new DNACrossOvereSystem.GetElitesEntitiesJob ()
+                    jobHandle = new CommonJobs.GetElitesEntitiesJob ()
                     {
                         i_eltiesCount                      = i_eltiesCount,
 
@@ -604,7 +464,7 @@ Debug.Log ( i + " / " + valarr.Length + "; e: " + valarr [j].entity + "; " + val
                         nmhm_entitiesScore                 = nmhm_currentEntitiesScore,
                         na_currentSortedKeysWithDuplicates = na_currentSortedKeysWithDuplicates
 
-                    }.Schedule () ;
+                    }.Schedule ( jobHandle ) ;
 
 //                    Dependency.Complete () ;
                         
@@ -617,47 +477,8 @@ Debug.Log ( i + " / " + valarr.Length + "; e: " + valarr [j].entity + "; " + val
 
 Debug.Log ( "current pop total score: " + i_currentPopulationTotalScore + "; total elite score: " + i_totalElitesScore + "; elites count: " + i_eltiesCount + " of current population: " + na_currentPopulationEntities.Length ) ;
                         
-                    // Grab % ellites selection from the probability group.
-                    if ( a_currentEliteIndexProbability.Length > 0 )
-                    {
 
-// Debug.LogError ( "parent keys with duplicates: " + na_parentSortedKeysWithDuplicates.Length ) ;
-
-                        Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.InjectEllites2ParrentsJob ( )
-                        {
-                            ecb                                 = ecb0,
-
-                            // i_currentElitesCount                = i_eltiesCount,
-                                
-                            na_elities                          = na_elities,
-                            na_currentPopulationEntities        = na_currentPopulationEntities,
-                            na_parentPopulationEntities         = na_parentPopulationEntities,
-
-
-                            // nhm_checkedEliteEntities         = new NativeHashMap <int, bool> ( i_perentageOfElites, Allocator.TempJob ),
-                            nmhm_parentEntitiesScore            = nmhm_parentEntitiesScore,
-                            na_parentKeysWithDuplicates         = na_parentSortedKeysWithDuplicates,
-
-                            na_currentEliteIndexProbability     = a_currentEliteIndexProbability.AsNativeArray (),
-
-                            a_brainScore                        = a_brainScore,
-                            
-                            random                              = this.random
-
-                        }.Schedule ( Dependency ) ;
-                            
-                        // Dependency.Complete () ;
-                            
-                        Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.SeParentGenerationJob ()
-                        {
-                            ecbp                  = ecbp0,
-                            na_populationEntities = na_parentPopulationEntities
-                            
-                        }.Schedule ( na_parentPopulationEntities.Length, 256, Dependency ) ;
-
-                        
-
-                    }
+                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._EvaluateElites ( ref jobHandle, ref a_currentEliteIndexProbability, ref ecbp0, ref ecb0, ref random, ref na_elities, ref na_currentPopulationEntities, ref na_parentPopulationEntities, in nmhm_parentEntitiesScore, in na_parentSortedKeysWithDuplicates, in a_brainScore ) ;
 
                     // becb.AddJobHandleForProducer ( Dependency ) ;
 
@@ -686,18 +507,18 @@ for ( int j = 0; j < na_currentPopulationEntities.Length; j ++ )
 }
 */
 
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.CalculateTotalScoresOfPopulationJob ()
+                    jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.CalculateTotalScoresOfPopulationJob ()
                     {
                         na_populationEntities = na_parentPopulationEntities,
                         na_totalScore         = na_totalScore,
 
                         a_brainScore          = a_brainScore
 
-                    }.Schedule ( Dependency ) ;
+                    }.Schedule ( jobHandle ) ;
                         
                         
-                    becb.AddJobHandleForProducer ( Dependency ) ;
-                    Dependency.Complete () ;
+                    becb.AddJobHandleForProducer ( jobHandle ) ;
+                    jobHandle.Complete () ;
 
                     // Utilize exisiting entities. Prevent physics from regenerating colliders.
 
@@ -713,7 +534,7 @@ for ( int j = 0; j < na_currentPopulationEntities.Length; j ++ )
                     managerBestFitness.entity = entityIndex.entity ;
 
                     // Save elite brains.
-                    ManagerMethods._SaveDNA2File ( this, in jsonNeuralNetworkMangers, in manager, in na_parentPopulationEntities, i_activeManager, s_path ) ;
+                    ManagerMethods._SaveDNA2File ( systemBase, in jsonNeuralNetworkMangers, in manager, in na_parentPopulationEntities, i_activeManager, s_path ) ;
 
                     na_parentPopulationEntities.Dispose () ;
 
@@ -738,21 +559,22 @@ for ( int j = 0; j < na_currentPopulationEntities.Length; j ++ )
 // } // for
 
 
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.ReuseEntitiesJob ()
+                    jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.ReuseEntitiesJob ()
                     {
                         ecbp                  = ecbp0,
                         na_populationEntities = na_spawningNewGenerationEntities
                             
-                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, Dependency ) ;
+                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
                         
 
-                    Dependency = new ReuseEntitiesJob ()
+                    jobHandle = new ReuseEntitiesJob ()
                     {
                         na_populationEntities = na_spawningNewGenerationEntities,
                         a_shaderAlpha         = a_shaderAlpha
                             
-                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, Dependency ) ;
+                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
                         
+
                     // becb.AddJobHandleForProducer ( Dependency ) ;
                     // Dependency.Complete () ;
                        
@@ -782,7 +604,7 @@ Debug.LogWarning ( "Default" ) ;
                 if ( isNewGenerationValid )
                 {
                 
-                    NNGenerationCountComponent generationCount = EntityManager.GetComponentData <NNGenerationCountComponent> ( managerEntity ) ;
+                    NNGenerationCountComponent generationCount = em.GetComponentData <NNGenerationCountComponent> ( managerEntity ) ;
                     
                     generationCount.i ++ ;
 
@@ -791,44 +613,30 @@ Debug.LogWarning ( "Default" ) ;
                     ecb1.SetComponent ( managerEntity, managerScore ) ;
                     ecb1.AddComponent <NNMangerIsSpawningNewGenerationTag> ( managerEntity ) ;
 
-                    this.random.NextInt2 () ;
+                    random.NextInt2 () ;
 
-                    Dependency = new SpawnCarsAtRandomPositionJob ( )
+                    jobHandle = new SpawnCarsAtRandomPositionJob ( )
                     {
                         na_populationEntities       = na_spawningNewGenerationEntities,
-                        a_position                  = GetComponentDataFromEntity <Translation> ( false ),
-                        a_rotation                  = GetComponentDataFromEntity <Rotation> ( false ),
-                        a_vehicleVelocity           = GetComponentDataFromEntity <VehicleVelocityComponent> ( false ),
-                        outputNeuronsValuesBuffer   = GetBufferFromEntity <NNOutputNeuronsValuesBuffer> ( false ),
-                        random                      = this.random, 
+                        a_position                  = systemBase.GetComponentDataFromEntity <Translation> ( false ),
+                        a_rotation                  = systemBase.GetComponentDataFromEntity <Rotation> ( false ),
+                        a_vehicleVelocity           = systemBase.GetComponentDataFromEntity <VehicleVelocityComponent> ( false ),
+                        outputNeuronsValuesBuffer   = systemBase.GetBufferFromEntity <NNOutputNeuronsValuesBuffer> ( false ),
+                        random                      = random, 
                         na_spawnerPoints            = na_spawnerPoints,
                         i_populationCount           = na_spawningNewGenerationEntities.Length
                         // f3_spawnPosition      = spawnerPosition.Value
                             
-                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, Dependency ) ;
+                    }.Schedule ( na_spawningNewGenerationEntities.Length, 256, jobHandle ) ;
                     
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.IsSpawningNownJob ()
-                    {
-                        ecbp                  = ecbp1,
-                        na_populationEntities = na_spawningNewGenerationEntities
-                            
-                    }.Schedule  ( na_spawningNewGenerationEntities.Length, 256, Dependency ) ;
 
-                    Dependency = new GeneticNueralNetwork.DOTS.ManagerJobs.AssignManager2BrainJob ()
-                    {
-                        ecbp                  = ecbp1,
-                        na_populationEntities = na_spawningNewGenerationEntities,
-                        a_assignedToManager   = GetComponentDataFromEntity <NNAssignedToManagerComponent> ( false ),
-                        nnManagerEntity       = managerEntity
-                            
-                    }.Schedule  ( na_spawningNewGenerationEntities.Length, 256, Dependency ) ;
-                    
+                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._SpawningGeneration ( ref systemBase, ref jobHandle, ref ecbp1, in na_spawningNewGenerationEntities, managerEntity ) ;
 
                         
-                    becb.AddJobHandleForProducer ( Dependency ) ;
-                    eecb.AddJobHandleForProducer ( Dependency ) ;
+                    becb.AddJobHandleForProducer ( jobHandle ) ;
+                    eecb.AddJobHandleForProducer ( jobHandle ) ;
 
-                    Dependency.Complete () ;
+                    jobHandle.Complete () ;
 
 // Debug.LogWarning ( "Generation: " + generationCount.i + " with best fitness: " + managerBestFitness.i + "; for entity: " + managerBestFitness.entity + "; total socre: " + managerScore.i ) ;
 
@@ -844,9 +652,162 @@ Debug.LogWarning ( "Default" ) ;
             na_managers.Dispose () ;
             na_spawnerPointEntities.Dispose () ;
             na_spawnerPoints.Dispose () ;
+            na_totalScore.Dispose () ;
 
         }
         
+        
+        static private void _FirstParent ( SystemBase systemBase, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref EntityCommandBuffer.ParallelWriter ecbp, ref ComponentDataFromEntity <ShaderAlphaComponent> a_shaderAlpha, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_firstPopulation, in NNManagerComponent manager, LayersNeuronCounts layersNeuronCounts, int i_activeManager, string s_path, out NativeArray <Entity> na_spawningNewGenerationEntities )
+        {
+
+            jobHandle = new GeneticNueralNetwork.DOTS.ManagerJobs.SetFirstGenerationAsAncestorsJob ()
+            {
+                ecbp                  = ecbp,
+                na_populationEntities = group_firstPopulation.ToEntityArray ( Allocator.TempJob )
+
+            }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, jobHandle ) ;
+                        
+            jobHandle = new DisableCarJob ()
+            {
+                ecbp                  = ecbp,
+                na_populationEntities = group_firstPopulation.ToEntityArray ( Allocator.TempJob ),
+                a_shaderAlpha         = a_shaderAlpha
+
+            }.Schedule ( group_firstPopulation.CalculateEntityCount (), 256, jobHandle ) ;
+                        
+            becb.AddJobHandleForProducer ( jobHandle ) ;
+            jobHandle.Complete () ;
+                        
+            ManagerMethods._ReadDNAFromFile ( systemBase, ref jsonNeuralNetworkMangers, in layersNeuronCounts, in group_firstPopulation, in manager, i_activeManager, s_path ) ;
+
+
+            na_spawningNewGenerationEntities = em.Instantiate ( spawner.prefabCarEntity, manager.i_populationSize, Allocator.TempJob ) ;
+
+        }
+
+
+        static private void _CheckNoneActiveMangers ( NNManagerSystem managerSystem, JobHandle jobHandle, ref EntityManager em, ref BeginInitializationEntityCommandBufferSystem becb, ref ManagerMethods.JsonNeuralNetworkMangers jsonNeuralNetworkMangers, in SpawnerPrefabs_FromEntityData spawner, in EntityQuery group_MMMamagerNotYetActive, LayersNeuronCounts layersNeuronCounts )
+        {
+
+
+            // Check none active managers.
+            if ( group_MMMamagerNotYetActive.CalculateChunkCount () > 0 )
+            {
+                
+                SystemBase systemBase = managerSystem ;
+
+                EntityCommandBuffer ecb                 = becb.CreateCommandBuffer () ;
+                EntityCommandBuffer.ParallelWriter ecbp = ecb.AsParallelWriter () ;
+                
+                NativeArray <Entity> na_notActiveManagers = group_MMMamagerNotYetActive.ToEntityArray ( Allocator.Temp ) ;
+                
+                // var layersNeuronCounts = layersNeuronCounts ;
+
+                jobHandle = managerSystem.Entities
+                    .WithName ( "NNResizeFirstGenerationBuffersJob" )
+                    .WithAll <NNManagerComponent, IsInitializedTag> ()
+                    .WithNone <IsAliveTag> ()
+                    // .WithReadOnly ( layersNeuronCounts )
+                    .ForEach ( ( ref NNLayersNeuronsCountComponent layersNeuronsCount ) =>
+                {
+                
+                    layersNeuronsCount.i_inputLayerNeuronsCount  = layersNeuronCounts.i_inputLayerNeuronsCount ;
+                    layersNeuronsCount.i_outputLayerNeuronsCount = layersNeuronCounts.i_outputLayerNeuronsCount ;
+                    layersNeuronsCount.i_hiddenLayerNeuronsCount = layersNeuronCounts.i_hiddenLayerNeuronsCount ; 
+
+                }).ScheduleParallel ( jobHandle ) ;
+                
+
+
+                becb.AddJobHandleForProducer ( jobHandle ) ;
+
+                // InvalidOperationException: 
+                // The previously scheduled job NNManagerSystem:<>c__DisplayClass_NNResizeFirstGenerationBuffersJob reads from the Unity.Entities.EntityTypeHandle <>c__DisplayClass_NNResizeFirstGenerationBuffersJob.safety. You must call JobHandle.Complete() on the job NNManagerSystem:<>c__DisplayClass_NNResizeFirstGenerationBuffersJob, before you can deallocate the Unity.Entities.EntityTypeHandle safely.
+                jobHandle.Complete () ;
+
+                
+                for ( int i = 0; i < na_notActiveManagers.Length; i ++ )
+                {
+                    
+                    Entity managerEntity                                   = na_notActiveManagers [i] ;
+                    ComponentDataFromEntity <NNManagerComponent> a_manager = systemBase.GetComponentDataFromEntity <NNManagerComponent> ( true ) ;
+                    NNManagerComponent manager                             = a_manager [managerEntity] ;
+
+                    NativeArray <Entity> na_spawningNewGenerationEntities  = em.Instantiate ( spawner.prefabCarEntity, manager.i_populationSize, Allocator.TempJob ) ;
+                    
+
+                    DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = em.GetBuffer <NNPNewPopulationBuffer> ( managerEntity ) ;
+                    a_newPopulation.ResizeUninitialized ( manager.i_populationSize ) ;
+
+                    a_newPopulation.CopyFrom ( na_spawningNewGenerationEntities.Reinterpret <NNPNewPopulationBuffer> () ) ;
+
+                    na_spawningNewGenerationEntities.Dispose () ;
+
+                } // for
+                
+                
+                BufferFromEntity <NNPNewPopulationBuffer> newPopulationBuffer = systemBase.GetBufferFromEntity <NNPNewPopulationBuffer> ( false ) ;
+// UnityEngine.Debug.LogWarning ( "First gen 1: " + na_notActiveManagers.Length ) ;
+
+                
+                for ( int i = 0; i < na_notActiveManagers.Length; i ++ )
+                {
+
+// Debug.Log ( i + "; all population: " + group_allPopulation.CalculateEntityCount () ) ;
+
+                        
+                    Entity managerEntity                                   = na_notActiveManagers [i] ;
+                    ComponentDataFromEntity <NNManagerComponent> a_manager = systemBase.GetComponentDataFromEntity <NNManagerComponent> ( true ) ;
+                    NNManagerComponent manager                             = a_manager [managerEntity] ;
+                    
+                    
+                    jsonNeuralNetworkMangers._AddAndInitializeManger ( 
+                        ManagerMethods._ElitesCount ( in manager ), 
+                        NewGenerationkIsSpawingSystem._Input2HiddenLayerWeightsCount ( layersNeuronCounts.i_inputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ), 
+                        NewGenerationkIsSpawingSystem._Hidden2OutputLayerWeightsCount ( layersNeuronCounts.i_outputLayerNeuronsCount, layersNeuronCounts.i_hiddenLayerNeuronsCount ), 
+                        layersNeuronCounts.i_hiddenLayerNeuronsCount,
+                        ref jsonNeuralNetworkMangers.l_managers 
+                    ) ;
+
+                    ecb.AddComponent <IsAliveTag> ( managerEntity ) ;
+
+                    DynamicBuffer <NNPNewPopulationBuffer> a_newPopulation = newPopulationBuffer [managerEntity] ;
+                    
+                    GeneticNueralNetwork.DOTS.ManagerJobsMethods._SetFirstGeneration ( ref systemBase, ref jobHandle, ref ecbp, in a_newPopulation, managerEntity ) ;
+                    /*
+            jobHandle = new ManagerJobs.SetFirstGenerationJob ()
+            {
+
+                ecbp                  = ecbp,
+                na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray ()
+
+            }.Schedule ( a_newPopulation.Length, 256, jobHandle ) ;
+                        
+            jobHandle = new ManagerJobs.AssignManager2BrainJob ()
+            {
+
+                ecbp                   = ecbp,
+                na_populationEntities = a_newPopulation.Reinterpret <Entity> ().AsNativeArray (),
+                a_assignedToManager   = systemBase.GetComponentDataFromEntity <NNAssignedToManagerComponent> ( false ),
+                nnManagerEntity       = managerEntity
+
+            }.Schedule  ( a_newPopulation.Length, 256, jobHandle ) ;
+                    */
+
+// Debug.Log ( "new generation: " + na_spawningNewGenerationEntities.Length ) ;
+                 
+                } // for
+
+                becb.AddJobHandleForProducer ( jobHandle ) ;
+                jobHandle.Complete () ;
+
+                na_notActiveManagers.Dispose () ;
+
+            } 
+
+        }
+
+
         static private void _DefineLayersNuronsCount ( ref LayersNeuronCounts layersNeuronCounts )
         {
             layersNeuronCounts.i_inputLayerNeuronsCount  = 11 ; // Lidar inputs - ( lenght - 2 ). // length - 2 = forward speed // lenght - 1 = side wawy speed, skid.
@@ -988,7 +949,6 @@ Debug.LogWarning ( "Default" ) ;
             }
 
         }
-
 
     }
 

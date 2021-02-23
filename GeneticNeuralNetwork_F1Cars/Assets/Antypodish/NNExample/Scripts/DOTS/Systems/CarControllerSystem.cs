@@ -35,7 +35,7 @@ namespace Antypodish.GNNExample.DOTS
             }).ScheduleParallel () ;
 
             float f_accelartionFactor = 0.0001f ;
-            float f_steeringFactor    = 0.8f ;
+            float f_steeringFactor    = 1.1f ;
 
             Entities
                 .WithName ( "CarControllerJob" )
